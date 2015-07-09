@@ -105,23 +105,24 @@ function drawStationLine(){
 //列车运行线绘制逻辑
 function drawTrain(train){
 	var mapEdgePoint=findLeftAndRightOutPoint(train);
-
+	if(mapEdgePoint.leftIn){drawLeftInMap(train.trainNo,mapEdgePoint.leftInY,train.type);}
+	if(mapEdgePoint.rightOut){drawRightOutMap(train.trainNo,mapEdgePoint.rightOutY,train.type)}
 	var firstDepatureInMap=StationDictionary.hasOwnProperty(train.depature)&&decidePointInMap(train.stops[0].leaveTime,train.stops[0].stationName);
 	var terminalArrivedInMap=StationDictionary.hasOwnProperty(train.arrival)&&decidePointInMap(train.stops[train.stops.length-1].arriveTime,train.stops[train.stops.length-1].stationName);
 
 	if(firstDepatureInMap){
-		
+		//TODO drawFirstDepatureSign	
 	}
+	else{
+		//TODO draw InMapSign
+	}
+
 	if(terminalArrivedInMap){
 		drawTerminalArrivedSymbol(convertTimeAndStationToCoordinate("19:36",train.arrival),train.type,train.direction);
 	}
-	if(mapEdgePoint.leftIn){
-
+	else{
+		//TODO draw OutMapSign
 	}
-	if(mapEdgePoint.rightOut){
-
-	}
-
 
 }
 
@@ -135,6 +136,13 @@ function convertTimeAndStationToCoordinate(time,stationName){
 	basePoint.x=((hour+(24-STARTHOUR))%24*60+minute)*TIMEINTERVAL+LEFTMARGIN;
 	basePoint.y=convertStationToYCoordinate(stationName);
 	return basePoint;
+}
+
+//时刻->数字
+function convertTimeToFloat(time){
+	var hour=parseFloat(time.split(":")[0]);
+	var minute=parseFloat(time.split(":")[1]);
+	return hour+minute/60;
 }
 
 //站名->svg y坐标
@@ -161,13 +169,15 @@ function findLeftAndRightOutPoint(train){
 				mapEdgePoint.rightOut=true;
 				mapEdgePoint.rightOutStationNo=i;
 				mapEdgePoint.rightOutInStation=false;
-				//console.log(train.trainNo+"在"+train.stops[i].stationName+(mapEdgePoint.rightOutInStation?"出站":"进站")+"前出图");
+				mapEdgePoint.rightOutY=calculateEdgePointY(train.stops[i-1].leaveTime==""?train.stops[i-1].arriveTime:train.stops[i-1].leaveTime,train.stops[i].arriveTime,train.stops[i-1],train.stops[i],ENDHOUR);
+				console.log(train.trainNo+"在"+train.stops[i].stationName+"进站前出图");
 			}
 			if(thisPointInMapInMap&&!(previousPointInMap)){
 				mapEdgePoint.leftIn=true;
 				mapEdgePoint.leftInStationNo=i;
 				mapEdgePoint.leftInInStation=true;
-				//console.log(train.trainNo+"在"+train.stops[i].stationName+(mapEdgePoint.rightOutInStation?"出站":"进站")+"前进图");
+				mapEdgePoint.leftInY=convertStationToYCoordinate(train.stops[i].stationName);
+				console.log(train.trainNo+"在"+train.stops[i].stationName+"出站前进图");
 			}
 			previousPointInMap=thisPointInMapInMap;
 		}
@@ -177,13 +187,16 @@ function findLeftAndRightOutPoint(train){
 				mapEdgePoint.rightOut=true;
 				mapEdgePoint.rightOutStationNo=i;
 				mapEdgePoint.rightOutInStation=true;
-				//console.log(train.trainNo+"在"+train.stops[i].stationName+(mapEdgePoint.rightOutInStation?"出站":"进站")+"前出图");
+				mapEdgePoint.rightOutY=convertStationToYCoordinate(train.stops[i].stationName);
+				console.log(train.trainNo+"在"+train.stops[i].stationName+"出站前出图");
 			}
 			if(thisPointInMapInMap&&!(previousPointInMap)){
 				mapEdgePoint.leftIn=true;
 				mapEdgePoint.leftInStationNo=i;
 				mapEdgePoint.leftInInStation=false;
-				//console.log(train.trainNo+"在"+train.stops[i].stationName+(mapEdgePoint.rightOutInStation?"出站":"进站")+"前进图");
+
+				mapEdgePoint.rightOutY=calculateEdgePointY(train.stops[i-1].leaveTime==""?train.stops[i-1].arriveTime:train.stops[i-1].leaveTime,train.stops[i].arriveTime,train.stops[i-1],train.stops[i],STARTHOUR);
+				console.log(train.trainNo+"在"+train.stops[i].stationName+"进站前进图");
 			}
 			previousPointInMap=thisPointInMapInMap;
 		}
@@ -192,8 +205,20 @@ function findLeftAndRightOutPoint(train){
 }
 
 //智能判断标线延长程度
+//TODO implement it
 function calculateSymbolConnectionLength(stationName,direction,symbolTime){
 	return 0;
+}
+
+//计算出入图点位置
+function calculateEdgePointY(timePrev,timeAfter,stationPrev,stationAfter,timeCurrent){
+	var pointYprev=convertStationToYCoordinate(stationPrev);
+	var pointYafter=convertStationToYCoordinate(stationAfter);
+	var during=convertTimeToFloat(timeAfter)-convertTimeToFloat(timePrev);
+	if(during<0){during+=24;}
+	var duringPast=timeCurrent-convertTimeToFloat(timePrev);
+	if(duringPast<0){duringPast+=24;}
+	return pointYprev+duringPast/during*(pointYafter-pointYprev);
 }
 
 /* 列车运行线绘制函数 */
@@ -254,7 +279,7 @@ function drawTimeDigit(type,basePoint,direction,isArrival){
 
 function drawRightOutMap(trainNo,outPointY,type){
 	svg.append("line")
-			.attr("class","rightOutMapLine")
+			.attr("class","rightOutMapLine MapLine"+trainNo)
 			.style("stroke",trainLineColor(type))
 			.attr("x1",LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL)
 			.attr("x2",LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL+60-(6-trainNo.length)*6)
@@ -270,7 +295,7 @@ function drawRightOutMap(trainNo,outPointY,type){
 
 function drawLeftInMap(trainNo,inPointY,type){
 	svg.append("line")
-			.attr("class","leftInMapLine")
+			.attr("class","leftInMapLine MapLine"+trainNo)
 			.style("stroke",trainLineColor(type))
 			.attr("x1",LEFTMARGIN-60+(6-trainNo.length)*6)
 			.attr("x2",LEFTMARGIN)
@@ -284,6 +309,12 @@ function drawLeftInMap(trainNo,inPointY,type){
 			.attr("fill",trainLineColor(type));
 }
 
-function drawInMapLine(train,startPoint,endPoint,isLeftIn,isRightOut){
-	
+function drawInMapLine(train,mapEdgePoint){
+	if(mapEdgePoint.rightOut&&mapEdgePoint.leftIn){
+
+	}
+	else{
+
+	}
 }
+
