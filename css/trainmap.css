@@ -16,3 +16,8 @@ body{
 #map{
 	height:1000px;
 }
+
+.timeDigitSmall{
+	font-size: 8px;
+	-webkit-text-size-adjust:none;
+}
