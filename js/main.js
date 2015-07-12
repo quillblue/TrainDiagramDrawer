@@ -31,8 +31,15 @@ $(document).ready(function(){
 	initStationDictionary();
 	drawTimeLine();
 	drawStationLine();
-	for(j=0;j<TrainData.length;j++){
-		drawTrain(TrainData[j]);
+	if(DIRECTION_FILTER>=0){
+		for(j=0;j<DownTrainData.length;j++){
+			drawTrain(DownTrainData[j]);
+		}
+	}
+	if(DIRECTION_FILTER<=0){
+		for(j=0;j<UpTrainData.length;j++){
+			drawTrain(UpTrainData[j]);
+		}
 	}
 })
 
@@ -179,11 +186,11 @@ function drawTrain(train){
 	var mapEdgePoint=findLeftAndRightOutPoint(train);
 	if(mapEdgePoint.leftIn){drawLeftInMap(train.trainNo,mapEdgePoint.leftInY,train.type);}
 	if(mapEdgePoint.rightOut){drawRightOutMap(train.trainNo,mapEdgePoint.rightOutY,train.type)}
-	var firstDepatureInMap=StationDictionary.hasOwnProperty(train.depature)&&decidePointInMap(train.stops[0].leaveTime,train.stops[0].stationName);
-	var terminalArrivedInMap=StationDictionary.hasOwnProperty(train.arrival)&&decidePointInMap(train.stops[train.stops.length-1].arriveTime,train.stops[train.stops.length-1].stationName);
+	var firstDepatureInMap=train.stops[0].arriveTime==""&&decidePointInMap(train.stops[0].leaveTime,train.stops[0].stationName);
+	var terminalArrivedInMap=train.stops[train.stops.length-1].leaveTime==""&&decidePointInMap(train.stops[train.stops.length-1].arriveTime,train.stops[train.stops.length-1].stationName);
 
 	if(firstDepatureInMap){
-		drawFirstDepatureSymbol(train.trainNo,train.type,train.depature,train.stops[0].leaveTime,train.direction);
+		drawFirstDepatureSymbol(train.trainNo,train.type,train.stops[0].stationName,train.stops[0].leaveTime,train.direction);
 	}
 	else{
 		if(!mapEdgePoint.leftIn){
@@ -192,7 +199,7 @@ function drawTrain(train){
 	}
 
 	if(terminalArrivedInMap){
-		drawTerminalArrivedSymbol(train.trainNo,train.type,train.arrival,train.stops[train.stops.length-1].arriveTime,train.direction);
+		drawTerminalArrivedSymbol(train.trainNo,train.type,train.stops[train.stops.length-1].stationName,train.stops[train.stops.length-1].arriveTime,train.direction);
 	}
 	else{
 		if(!mapEdgePoint.rightOut){
@@ -223,7 +230,7 @@ function drawTrain(train){
 		}
 	}
 	for(i=0;i<train.stops.length;i++){
-		if(train.stops[i].arriveTime!=""&&decidePointInMap(train.stops[i].arriveTime,train.stops[i].stationName)){
+		if((train.stops[i].arriveTime!=""&&train.stops[i].arriveTime!="...")&&decidePointInMap(train.stops[i].arriveTime,train.stops[i].stationName)){
 			var basePoint=convertTimeAndStationToCoordinate(train.stops[i].arriveTime,train.stops[i].stationName);
 			var text=train.stops[i].arriveTime.split(":")[1][1];
 			svg.append("text")
@@ -267,7 +274,7 @@ function findLeftAndRightOutPoint(train){
 	var previousPointX=convertTimeToXCoordinate(train.stops[0].arriveTime!=""?train.stops[0].arriveTime:train.stops[0].leaveTime);
 	var previousPointInMap=decidePointInMapByPointX(previousPointX)
 	for(i=0;i<train.stops.length;i++){
-		if(train.stops[i].arriveTime!=""){
+		if(train.stops[i].arriveTime!=""&&train.stops[i].arriveTime!="..."){
 			var thisPointX=convertTimeToXCoordinate(train.stops[i].arriveTime);
 			var thisPointInMap=decidePointInMapByPointX(thisPointX);
 			if((!thisPointInMap)&&previousPointInMap||(thisPointX<previousPointX&&previousPointInMap)){
@@ -472,7 +479,7 @@ function drawInMapLine(train,stopNumberStart,stopNumberEnd,isLeftIn,isRightOut,m
 		trainLine+=LEFTMARGIN+","+mapEdgePoint.leftInY;
 	}
 	for(i=stopNumberStart;i<stopNumberEnd;i++){
-		if(train.stops[i].arriveTime!=""&&decidePointInMap(train.stops[i].arriveTime,train.stops[i].stationName)){
+		if((train.stops[i].arriveTime!=""&&train.stops[i].arriveTime!="...")&&decidePointInMap(train.stops[i].arriveTime,train.stops[i].stationName)){
 			var point=convertTimeAndStationToCoordinate(train.stops[i].arriveTime,train.stops[i].stationName);
 			trainLine+=" "+point.x+","+point.y;
 		}
