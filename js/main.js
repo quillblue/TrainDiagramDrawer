@@ -193,7 +193,7 @@ function drawTrain(train){
 		drawFirstDepatureSymbol(train.trainNo,train.type,train.stops[0].stationName,train.stops[0].leaveTime,train.direction);
 	}
 	else{
-		if(!mapEdgePoint.leftIn){
+		if(decidePointInMapByPointX(convertTimeToXCoordinate(train.stops[0].arriveTime))){
 			drawInMapSymbol(train.trainNo,train.type,train.stops[0].stationName,train.stops[0].arriveTime,train.direction);
 		}
 	}
@@ -202,7 +202,7 @@ function drawTrain(train){
 		drawTerminalArrivedSymbol(train.trainNo,train.type,train.stops[train.stops.length-1].stationName,train.stops[train.stops.length-1].arriveTime,train.direction);
 	}
 	else{
-		if(!mapEdgePoint.rightOut){
+		if(decidePointInMapByPointX(convertTimeToXCoordinate(train.stops[train.stops.length-1].leaveTime))){
 			drawOutMapSymbol(train.trainNo,train.type,train.stops[train.stops.length-1].stationName,train.stops[train.stops.length-1].leaveTime==""?train.stops[train.stops.length-1].arriveTime:train.stops[train.stops.length-1].leaveTime,train.direction);
 		}
 	}

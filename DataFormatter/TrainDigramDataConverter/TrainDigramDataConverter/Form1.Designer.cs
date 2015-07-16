@@ -62,6 +62,7 @@
             this.textBoxResult.Multiline = true;
             this.textBoxResult.Name = "textBoxResult";
             this.textBoxResult.ReadOnly = true;
+            this.textBoxResult.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.textBoxResult.Size = new System.Drawing.Size(522, 262);
             this.textBoxResult.TabIndex = 2;
             // 
@@ -103,9 +104,10 @@
             // 
             // buttonStart
             // 
+            this.buttonStart.Font = new System.Drawing.Font("宋体", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.buttonStart.Location = new System.Drawing.Point(443, 20);
             this.buttonStart.Name = "buttonStart";
-            this.buttonStart.Size = new System.Drawing.Size(75, 48);
+            this.buttonStart.Size = new System.Drawing.Size(93, 48);
             this.buttonStart.TabIndex = 7;
             this.buttonStart.Text = "开始";
             this.buttonStart.UseVisualStyleBackColor = true;

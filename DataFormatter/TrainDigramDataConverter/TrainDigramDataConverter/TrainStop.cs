@@ -5,11 +5,12 @@ using System.Text;
 
 namespace TrainDigramDataConverter
 {
+    [Serializable]
     public class TrainStop
     {
-        private String stationName;
-        private String arriveTime;
-        private String leaveTime;
+        public String stationName;
+        public String arriveTime;
+        public String leaveTime;
 
         public TrainStop(string stationName, string arriveTime, string leaveTime) {
             this.stationName = stationName;

@@ -44,7 +44,7 @@ namespace TrainDigramDataConverter
             try
             {
                 String downTrainData = convert(textBoxDownFilePath.Text, 1);
-                textBoxResult.Text += "var DownTrainData=" + downTrainData + "\n";
+                textBoxResult.Text += "var DownTrainData=" + downTrainData + ";\n";
             }
             catch (Exception ee) {
                 textBoxResult.Text +="下行数据转换失败：\n"+ ee.Message;
@@ -53,7 +53,7 @@ namespace TrainDigramDataConverter
             try
             {
                 String upTrainData = convert(textBoxUpFilePath.Text, -1);
-                textBoxResult.Text += "var DownTrainData=" + upTrainData + "\n";
+                textBoxResult.Text += "var UpTrainData=" + upTrainData + ";\n";
             }
             catch (Exception ee)
             {

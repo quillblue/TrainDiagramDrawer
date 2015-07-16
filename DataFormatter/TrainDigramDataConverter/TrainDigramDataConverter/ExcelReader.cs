@@ -41,7 +41,9 @@ namespace TrainDigramDataConverter
                         String stationName = stationDict[j];
                         String arriveTime = timeReader.ConvertTime(workListDataset.Tables[0].Rows[j][i].ToString());
                         String leaveTime = timeReader.ConvertTime(workListDataset.Tables[0].Rows[j+1][i].ToString());
-                        td.AddStop(stationName, arriveTime, leaveTime);
+                        if (arriveTime != "" || leaveTime != "") { 
+                            td.AddStop(stationName, arriveTime, leaveTime);
+                        }
                     }
                 }
                 else
@@ -51,6 +53,10 @@ namespace TrainDigramDataConverter
                         String stationName = stationDict[j];
                         String arriveTime = timeReader.ConvertTime(workListDataset.Tables[0].Rows[j][i].ToString());
                         String leaveTime = timeReader.ConvertTime(workListDataset.Tables[0].Rows[j - 1][i].ToString()); td.AddStop(stationName, arriveTime, leaveTime);
+                        if (arriveTime != "" || leaveTime != "")
+                        {
+                            td.AddStop(stationName, arriveTime, leaveTime);
+                        }
                     }
                 }
                 resultList.Add(td);
@@ -62,10 +68,11 @@ namespace TrainDigramDataConverter
         {
             if (trainNo.StartsWith("DJ")) { return "DJ"; }
             if (char.IsLetter(trainNo[0]) || trainNo.StartsWith("0")) { return trainNo[0].ToString(); }
-            if (trainNo.Length == 5) { return ""; }
-
-
-            return "";
+            if (trainNo.Length < 5) { return "客"; }
+            else {
+                if (trainNo.Substring(0, 1) == "5") { return "路用"; }
+                else{return "货";} 
+            }
         }
 
     }
