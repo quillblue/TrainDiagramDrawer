@@ -10,8 +10,9 @@ var LINEDATA_HUKUNHIGHWAY_HUHANG={
 				{name:"桐乡",uniqueName:"桐乡",position:145},
 				{name:"海宁西",uniqueName:"海宁西",position:166},
 				{name:"余杭",uniqueName:"余杭",position:177},
-				{name:"笕桥线路所",uniqueName:"笕桥线路所(杭州东方向)",position:179},
+				{name:"笕桥线路所",uniqueName:"笕桥线路所",position:179},
 				{name:"杭州东",uniqueName:"杭州东",position:192}],
+	SubLineConnectionStation:{"笕桥线路所":"杭州东"},
 	SubLineStationData:[[{name:"笕桥线路所",uniqueName:"笕桥线路所(笕桥方向)",position:0},
 				{name:"笕桥",uniqueName:"笕桥",position:19},
 				{name:"杭州",uniqueName:"杭州",position:25}]]

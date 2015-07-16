@@ -487,6 +487,12 @@ function drawInMapLine(train,stopNumberStart,stopNumberEnd,isLeftIn,isRightOut,m
 			var point=convertTimeAndStationToCoordinate(train.stops[i].leaveTime,train.stops[i].stationName);
 			trainLine+=" "+point.x+","+point.y;
 		}
+		if(SubLineConnectionStation.hasOwnProperty(train.stops[i].stationName)){
+			if(i<stopNumberEnd-1&&train.stops[i+1].stationName!=SubLineConnectionStation[train.stops[i].stationName]){
+				var point=convertTimeAndStationToCoordinate(train.stops[i].leaveTime,train.stops[i].stationName+"("+train.stops[i+1].stationName+"方向)");
+				trainLine+=" "+point.x+","+point.y;
+			}
+		}
 	}
 	if(isRightOut){
 		trainLine+=" "+(LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL)+","+mapEdgePoint.rightOutY;

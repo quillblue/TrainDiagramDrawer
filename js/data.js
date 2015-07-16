@@ -21,6 +21,9 @@ var DIRECTION_FILTER=0;
 //主线信息
 var StationData=LINEDATA_HUKUNHIGHWAY_HUHANG.StationData;
 
+//支线接算站{接算站:主线下一站}
+var SubLineConnectionStation=LINEDATA_HUKUNHIGHWAY_HUHANG.SubLineConnectionStation;
+
 //支线信息，无支线时定义为[]
 var SubLineStationData=LINEDATA_HUKUNHIGHWAY_HUHANG.SubLineStationData;
 
@@ -32,9 +35,8 @@ var DownTrainData=[{trainNo:"G7363",
 				direction:1,
 				stops:[{stationName:"上海",arriveTime:"",leaveTime:"18:00"},
 				{stationName:"上海虹桥",arriveTime:"18:25",leaveTime:"18:29"},
-				{stationName:"嘉兴南",arriveTime:"18:59",leaveTime:"19:01"},
-				{stationName:"笕桥线路所(杭州东方向)",arriveTime:"...",leaveTime:"19:23"},
-				{stationName:"笕桥线路所(笕桥方向)",arriveTime:"...",leaveTime:"19:23"},
+				{stationName:"笕桥线路所",arriveTime:"...",leaveTime:"19:24"},
+				{stationName:"笕桥",arriveTime:"...",leaveTime:"19:25"},
 				{stationName:"杭州",arriveTime:"19:33",leaveTime:""}]},
 				{trainNo:"D379",
 				type:"D",
@@ -42,14 +44,7 @@ var DownTrainData=[{trainNo:"G7363",
 				stops:[{stationName:"上海虹桥",arriveTime:"",leaveTime:"17:43"},
 				{stationName:"松江南",arriveTime:"",leaveTime:"17:55"},
 				{stationName:"嘉兴南",arriveTime:"18:21",leaveTime:"19:24"},
-				{stationName:"杭州东",arriveTime:"19:59",leaveTime:"20:05"}]},
-				{trainNo:"D2283",
-				type:"D",
-				direction:1,
-				stops:[
-				{stationName:"上海虹桥",arriveTime:"18:05",leaveTime:"18:09"},
-				{stationName:"嘉兴南",arriveTime:"18:37",leaveTime:"18:42"},
-				{stationName:"杭州东",arriveTime:"19:08",leaveTime:""}]}
+				{stationName:"杭州东",arriveTime:"19:59",leaveTime:"20:05"}]}
 ];
 
 //上行列车
