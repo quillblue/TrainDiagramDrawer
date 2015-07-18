@@ -140,11 +140,9 @@ function drawStationLine(){
 
 /* 运行图绘制辅助函数-通用 */
 //(时刻,站名)->svg坐标
-function convertTimeAndStationToCoordinate(time,stationName){
+function convertTimeAndStationToCoordinate(time,stationName,drawOnFinalLine){
 	var basePoint=new Object();
-	var hour=parseInt(time.split(":")[0]);
-	var minute=parseFloat(time.split(":")[1]);
-	basePoint.x=((hour+(24-STARTHOUR))%24*60+minute)*TIMEINTERVAL+LEFTMARGIN;
+	basePoint.x=convertTimeToXCoordinate(time,drawOnFinalLine);
 	basePoint.y=convertStationToYCoordinate(stationName);
 	return basePoint;
 }
@@ -153,15 +151,19 @@ function convertTimeAndStationToCoordinate(time,stationName){
 function convertTimeToFloat(time){
 	var hour=parseFloat(time.split(":")[0]);
 	var minute=parseFloat(time.split(":")[1]);
-	return hour+minute/60;
+	var returnFloat=hour+minute/60;
+	if(time.split(":").length==3){returnFloat+=parseInt(time.split(":")[2])/3600;}
+	return returnFloat;
 }
 
 //时刻->svg x坐标
-function convertTimeToXCoordinate(time){
+function convertTimeToXCoordinate(time,drawOnFinalLine){
 	var timeFloat=convertTimeToFloat(time);
 	timeFloat-=STARTHOUR;
 	if(timeFloat<0){timeFloat+=24;}
-	return timeFloat*60*TIMEINTERVAL+LEFTMARGIN;
+	var returnX=timeFloat*60*TIMEINTERVAL+LEFTMARGIN;
+	if(returnX==LEFTMARGIN&&drawOnFinalLine){return MAPHOURLENGTH*60*TIMEINTERVAL+LEFTMARGIN;}
+	return returnX;
 }
 
 //站名->svg y坐标
@@ -188,27 +190,27 @@ function drawTrain(train){
 	if(mapEdgePoint.rightOut){drawRightOutMap(train.trainNo,mapEdgePoint.rightOutY,train.type)}
 	var firstDepatureInMap=train.stops[0].arriveTime==""&&decidePointInMap(train.stops[0].leaveTime,train.stops[0].stationName);
 	var terminalArrivedInMap=train.stops[train.stops.length-1].leaveTime==""&&decidePointInMap(train.stops[train.stops.length-1].arriveTime,train.stops[train.stops.length-1].stationName);
-
+	//绘制始发、入图标记
 	if(firstDepatureInMap){
 		drawFirstDepatureSymbol(train.trainNo,train.type,train.stops[0].stationName,train.stops[0].leaveTime,train.direction);
 	}
 	else{
-		if(decidePointInMapByPointX(convertTimeToXCoordinate(train.stops[0].arriveTime))){
+		if(decidePointInMapByPointX(convertTimeToXCoordinate(train.stops[0].arriveTime,true))){
 			drawInMapSymbol(train.trainNo,train.type,train.stops[0].stationName,train.stops[0].arriveTime,train.direction);
 		}
 	}
-
+	//绘制终到、出图标记
 	if(terminalArrivedInMap){
 		drawTerminalArrivedSymbol(train.trainNo,train.type,train.stops[train.stops.length-1].stationName,train.stops[train.stops.length-1].arriveTime,train.direction);
 	}
 	else{
-		if(decidePointInMapByPointX(convertTimeToXCoordinate(train.stops[train.stops.length-1].leaveTime))){
+		if(decidePointInMapByPointX(convertTimeToXCoordinate(train.stops[train.stops.length-1].leaveTime,true))){
 			drawOutMapSymbol(train.trainNo,train.type,train.stops[train.stops.length-1].stationName,train.stops[train.stops.length-1].leaveTime==""?train.stops[train.stops.length-1].arriveTime:train.stops[train.stops.length-1].leaveTime,train.direction);
 		}
 	}
 	
 	if(mapEdgePoint.leftIn&&mapEdgePoint.rightOut){
-		if(mapEdgePoint.rightOutStationNo<mapEdgePoint.leftInStationNo||(mapEdgePoint.rightOutStationNo==mapEdgePoint.leftInStationNo&&(!mapEdgePoint.rightOutInStation))){
+		if(mapEdgePoint.rightOutStationNo<mapEdgePoint.leftInStationNo||(mapEdgePoint.rightOutStationNo==mapEdgePoint.leftInStationNo&&((!mapEdgePoint.rightOutInStation)||(mapEdgePoint.leftInInStation==mapEdgePoint.rightOutInStation)))){
 			drawInMapLine(train,0,mapEdgePoint.rightOutStationNo,false,true,mapEdgePoint);
 			drawInMapLine(train,mapEdgePoint.leftInStationNo,train.stops.length,true,false,mapEdgePoint);
 		}
@@ -229,15 +231,16 @@ function drawTrain(train){
 			}
 		}
 	}
+	//绘制数字
 	for(i=0;i<train.stops.length;i++){
 		if((train.stops[i].arriveTime!=""&&train.stops[i].arriveTime!="...")&&decidePointInMap(train.stops[i].arriveTime,train.stops[i].stationName)){
-			var basePoint=convertTimeAndStationToCoordinate(train.stops[i].arriveTime,train.stops[i].stationName);
+			var basePoint=convertTimeAndStationToCoordinate(train.stops[i].arriveTime,train.stops[i].stationName,!(i==0));
 			var text=train.stops[i].arriveTime.split(":")[1][1];
 			svg.append("text")
 				.attr("class","timeDigit")
 				.text(text)
 				.attr("x",basePoint.x+1)
-				.attr("y",basePoint.y-train.direction*2)
+				.attr("y",basePoint.y-train.direction*1.8)
 				.attr("fill",trainLineColor(train.type));
 			if(train.stops[i].leaveTime!=""&&decidePointInMap(train.stops[i].leaveTime,train.stops[i].stationName)&&MARK_ARRIVAL_ON_DEPATURE){
 				var hourDelta=parseInt(train.stops[i].leaveTime.split(":")[0]-train.stops[i].arriveTime.split(":")[0]);
@@ -247,18 +250,18 @@ function drawTrain(train){
 				svg.append("text")
 					.attr("class","timeDigitSmall")
 					.text(text)
-					.attr("x",basePoint.x+3)
-					.attr("y",basePoint.y-1.05*train.direction*12)
+					.attr("x",basePoint.x+6)
+					.attr("y",basePoint.y-2)
 					.attr("fill","#666");
 			}
 		}
 		if(train.stops[i].leaveTime!=""&&decidePointInMap(train.stops[i].leaveTime,train.stops[i].stationName)){
-			var basePoint=convertTimeAndStationToCoordinate(train.stops[i].leaveTime,train.stops[i].stationName);
+			var basePoint=convertTimeAndStationToCoordinate(train.stops[i].leaveTime,train.stops[i].stationName,!(i==0&&(train.stops[i].arriveTime==""||train.stops[i].arriveTime=="...")));
 			var text=train.stops[i].leaveTime.split(":")[1][1];
 			svg.append("text")
 				.attr("class","timeDigit")
 				.text(text)
-				.attr("x",basePoint.x-8)
+				.attr("x",basePoint.x-6)
 				.attr("y",basePoint.y+train.direction*12)
 				.attr("fill",trainLineColor(train.type));
 			
@@ -271,20 +274,20 @@ function findLeftAndRightOutPoint(train){
 	var mapEdgePoint=new Object();
 	mapEdgePoint.leftIn=false;
 	mapEdgePoint.rightOut=false;
-	var previousPointX=convertTimeToXCoordinate(train.stops[0].arriveTime!=""?train.stops[0].arriveTime:train.stops[0].leaveTime);
+	var previousPointX=convertTimeToXCoordinate(train.stops[0].arriveTime!=""?train.stops[0].arriveTime:train.stops[0].leaveTime,false);
 	var previousPointInMap=decidePointInMapByPointX(previousPointX)
 	for(i=0;i<train.stops.length;i++){
 		if(train.stops[i].arriveTime!=""&&train.stops[i].arriveTime!="..."){
-			var thisPointX=convertTimeToXCoordinate(train.stops[i].arriveTime);
+			var thisPointX=convertTimeToXCoordinate(train.stops[i].arriveTime,false);
 			var thisPointInMap=decidePointInMapByPointX(thisPointX);
-			if((!thisPointInMap)&&previousPointInMap||(thisPointX<previousPointX&&previousPointInMap)){
+			if((!thisPointInMap)&&previousPointInMap||(thisPointX<previousPointX&&previousPointInMap&&thisPointX!=LEFTMARGIN)){
 				mapEdgePoint.rightOut=true;
 				mapEdgePoint.rightOutStationNo=i;
 				mapEdgePoint.rightOutInStation=false;
 				mapEdgePoint.rightOutY=calculateEdgePointY(train.stops[i-1].leaveTime==""?train.stops[i-1].arriveTime:train.stops[i-1].leaveTime,train.stops[i].arriveTime,train.stops[i-1].stationName,train.stops[i].stationName,ENDHOUR);
 				console.log(train.trainNo+"在"+train.stops[i].stationName+"进站前出图");
 			}
-			if(thisPointInMap&&!(previousPointInMap)||(thisPointX<previousPointX&&previousPointInMap)){
+			if(thisPointInMap&&!(previousPointInMap)||(thisPointX<previousPointX&&previousPointInMap&&thisPointX!=LEFTMARGIN)){
 				mapEdgePoint.leftIn=true;
 				mapEdgePoint.leftInStationNo=i;
 				mapEdgePoint.leftInInStation=false;
@@ -295,16 +298,16 @@ function findLeftAndRightOutPoint(train){
 			previousPointInMap=thisPointInMap;
 		}
 		if(train.stops[i].leaveTime!=""){
-			var thisPointX=convertTimeToXCoordinate(train.stops[i].leaveTime);
+			var thisPointX=convertTimeToXCoordinate(train.stops[i].leaveTime,false);
 			var thisPointInMap=decidePointInMapByPointX(thisPointX);
-			if((!thisPointInMap)&&previousPointInMap||(thisPointX<previousPointX&&previousPointInMap)){
+			if((!thisPointInMap)&&previousPointInMap||(thisPointX<previousPointX&&previousPointInMap&&thisPointX!=LEFTMARGIN)){
 				mapEdgePoint.rightOut=true;
 				mapEdgePoint.rightOutStationNo=i;
 				mapEdgePoint.rightOutInStation=true;
 				mapEdgePoint.rightOutY=convertStationToYCoordinate(train.stops[i].stationName);
 				console.log(train.trainNo+"在"+train.stops[i].stationName+"出站前出图");
 			}
-			if(thisPointInMap&&!(previousPointInMap)||(thisPointX<previousPointX&&previousPointInMap)){
+			if(thisPointInMap&&!(previousPointInMap)||(thisPointX<previousPointX&&previousPointInMap&&thisPointX!=LEFTMARGIN)){
 				mapEdgePoint.leftIn=true;
 				mapEdgePoint.leftInStationNo=i;
 				mapEdgePoint.leftInInStation=true;
@@ -358,7 +361,7 @@ function trainLineColor(type){
 //绘制始发标记
 function drawFirstDepatureSymbol(trainNo,type,stationName,time,direction){
 	var extendLength=calculateSymbolConnectionLength(stationName,direction,time);
-	var basePoint=convertTimeAndStationToCoordinate(time,stationName);
+	var basePoint=convertTimeAndStationToCoordinate(time,stationName,false);
 	var halfLength=(trainNo.length/2+1.25)*SYMBOLUNIT
 	var polylinePoints=basePoint.x+","+basePoint.y;
 	polylinePoints+=" "+basePoint.x+","+(basePoint.y-direction*1.75*SYMBOLUNIT-direction*extendLength);
@@ -381,7 +384,7 @@ function drawFirstDepatureSymbol(trainNo,type,stationName,time,direction){
 //绘制终到标记
 function drawTerminalArrivedSymbol(trainNo,type,stationName,time,direction){
 	var extendLength=calculateSymbolConnectionLength(stationName,direction,time);
-	var basePoint=convertTimeAndStationToCoordinate(time,stationName);
+	var basePoint=convertTimeAndStationToCoordinate(time,stationName,true);
 	var polylinePoints=basePoint.x+","+basePoint.y;
 	polylinePoints+=" "+basePoint.x+","+(basePoint.y+direction*2*SYMBOLUNIT+direction*extendLength);
 	polylinePoints+=" "+(basePoint.x-SYMBOLUNIT)+","+(basePoint.y+direction*2*SYMBOLUNIT+direction*extendLength);
@@ -400,7 +403,7 @@ function drawTerminalArrivedSymbol(trainNo,type,stationName,time,direction){
 //绘制出图标记
 function drawOutMapSymbol(trainNo,type,stationName,time,direction){
 	var extendLength=calculateSymbolConnectionLength(stationName,direction,time);
-	var basePoint=convertTimeAndStationToCoordinate(time,stationName);
+	var basePoint=convertTimeAndStationToCoordinate(time,stationName,true);
 	var polylinePoints=basePoint.x+","+basePoint.y;
 	polylinePoints+=" "+basePoint.x+","+(basePoint.y+direction*2*SYMBOLUNIT+direction*extendLength);
 	polylinePoints+=" "+(basePoint.x+2*SYMBOLUNIT)+","+(basePoint.y+direction*2*SYMBOLUNIT+direction*extendLength);
@@ -419,7 +422,7 @@ function drawOutMapSymbol(trainNo,type,stationName,time,direction){
 //绘制入图标记
 function drawInMapSymbol(trainNo,type,stationName,time,direction){
 	var extendLength=calculateSymbolConnectionLength(stationName,direction,time);
-	var basePoint=convertTimeAndStationToCoordinate(time,stationName);
+	var basePoint=convertTimeAndStationToCoordinate(time,stationName,false);
 	var lineLength=(trainNo.length+2.5)*SYMBOLUNIT
 	var polylinePoints=basePoint.x+","+basePoint.y;
 	polylinePoints+=" "+basePoint.x+","+(basePoint.y-direction*1.75*SYMBOLUNIT-direction*extendLength);
@@ -479,22 +482,26 @@ function drawInMapLine(train,stopNumberStart,stopNumberEnd,isLeftIn,isRightOut,m
 		trainLine+=LEFTMARGIN+","+mapEdgePoint.leftInY;
 	}
 	for(i=stopNumberStart;i<stopNumberEnd;i++){
-		if((train.stops[i].arriveTime!=""&&train.stops[i].arriveTime!="...")&&decidePointInMap(train.stops[i].arriveTime,train.stops[i].stationName)){
-			var point=convertTimeAndStationToCoordinate(train.stops[i].arriveTime,train.stops[i].stationName);
+		if((train.stops[i].arriveTime!=""&&train.stops[i].arriveTime!="...")&&(decidePointInMap(train.stops[i].arriveTime,train.stops[i].stationName)&&(!(i==stopNumberStart&&mapEdgePoint.leftInInStation)))){
+			var point=convertTimeAndStationToCoordinate(train.stops[i].arriveTime,train.stops[i].stationName,!(i==stopNumberStart));
 			trainLine+=" "+point.x+","+point.y;
 		}
 		if(train.stops[i].leaveTime!=""&&decidePointInMap(train.stops[i].leaveTime,train.stops[i].stationName)){
-			var point=convertTimeAndStationToCoordinate(train.stops[i].leaveTime,train.stops[i].stationName);
+			var point=convertTimeAndStationToCoordinate(train.stops[i].leaveTime,train.stops[i].stationName,!(i==stopNumberStart&&(train.stops[i].arriveTime==""||train.stops[i].arriveTime=="...")));
 			trainLine+=" "+point.x+","+point.y;
 		}
 		if(SubLineConnectionStation.hasOwnProperty(train.stops[i].stationName)){
 			if(i<stopNumberEnd-1&&train.stops[i+1].stationName!=SubLineConnectionStation[train.stops[i].stationName]){
-				var point=convertTimeAndStationToCoordinate(train.stops[i].leaveTime,train.stops[i].stationName+"("+train.stops[i+1].stationName+"方向)");
+				var point=convertTimeAndStationToCoordinate(train.stops[i].leaveTime,train.stops[i].stationName+"("+train.stops[i+1].stationName+"方向)",true);
 				trainLine+=" "+point.x+","+point.y;
 			}
 		}
 	}
 	if(isRightOut){
+		if(mapEdgePoint.rightOutInStation){
+			var point=convertTimeAndStationToCoordinate(train.stops[stopNumberEnd].arriveTime,train.stops[stopNumberEnd].stationName,true);
+			trainLine+=" "+point.x+","+point.y;
+		}
 		trainLine+=" "+(LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL)+","+mapEdgePoint.rightOutY;
 	}
 	svg.append("polyline")
