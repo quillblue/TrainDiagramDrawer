@@ -1,8 +1,13 @@
+/*
+* Create By Quillblue on 2015-7-8
+* Data Config File
+*/
+
 //沪昆高速线沪杭段里程表（上海-上海虹桥-笕桥线路所-杭州东/杭州）
 var LINEDATA_HUKUNHIGHWAY_HUHANG={
 	StationData:[{name:"上海",uniqueName:"上海",position:0},
-				{name:"上海虹桥",uniqueName:"上海虹桥(高速场)",position:33},
-				{name:"上海虹桥",uniqueName:"上海虹桥(综合场)",position:33},
+				{name:"上海虹桥(综合场)",uniqueName:"上海虹桥(综合场)",position:30},
+				{name:"上海虹桥(高速场)",uniqueName:"上海虹桥(高速场)",position:33},
 				{name:"七宝线路所",uniqueName:"七宝线路所",position:38},
 				{name:"春申线路所",uniqueName:"春申线路所",position:52},
 				{name:"松江南",uniqueName:"松江南",position:64},

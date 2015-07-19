@@ -23,6 +23,12 @@
 }
 
 .timeDigit{
+	font-size: 9px;
+	-webkit-text-size-adjust:none;
+}
+
+
+.TrainNo{
 	font-size: 10px;
 	-webkit-text-size-adjust:none;
 }

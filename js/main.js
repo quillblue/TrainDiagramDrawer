@@ -7,7 +7,9 @@ var LEFTMARGIN=200;
 // 1分钟格格宽度
 var TIMEINTERVAL=6;
 // 符号标记单位
-var SYMBOLUNIT=6;
+var SYMBOLUNIT=5;
+
+var EXTEND_LENGTH_UINT=15;
 // 运行图第一站横线距离画布顶端的距离
 var TOPMARGEIN=80;
 // 运行图高度
@@ -22,6 +24,9 @@ var MAXPOS=0;
 var MAPHOURLENGTH=24;
 // 站名词典
 var StationDictionary=new Object();
+// 运行线宽度
+var TRAINLINE_WIDTH="1";
+
 
 $(document).ready(function(){
 	$("#title").html(MapTitle);
@@ -29,6 +34,7 @@ $(document).ready(function(){
 	$(".contentHolder").attr("style","width:"+(MAPHOURLENGTH*60*TIMEINTERVAL+300)+"px");
 	$("#map").attr("width",MAPHOURLENGTH*60*TIMEINTERVAL+300+"px");
 	initStationDictionary();
+	initSpaceIndicator();
 	drawTimeLine();
 	drawStationLine();
 	if(DIRECTION_FILTER>=0){
@@ -58,6 +64,15 @@ function initStationDictionary(){
 		}
 		MAXPOS=MAXPOS+subline[subline.length-1].position;
 	}
+}
+
+//初始化空间占用指示
+function initSpaceIndicator(){
+	var stationList=StationData;
+	for(i=0;i<SubLineStationData.length;i++){
+		stationList=stationList.concat(SubLineStationData[i]);
+	}
+	SpaceIndicator.init(stationList);
 }
 
 /* 运行图底图绘制函数 */
@@ -162,7 +177,7 @@ function convertTimeToXCoordinate(time,drawOnFinalLine){
 	timeFloat-=STARTHOUR;
 	if(timeFloat<0){timeFloat+=24;}
 	var returnX=timeFloat*60*TIMEINTERVAL+LEFTMARGIN;
-	if(returnX==LEFTMARGIN&&drawOnFinalLine){return MAPHOURLENGTH*60*TIMEINTERVAL+LEFTMARGIN;}
+	if(returnX==LEFTMARGIN&&STARTHOUR==ENDHOUR&&drawOnFinalLine){return MAPHOURLENGTH*60*TIMEINTERVAL+LEFTMARGIN;}
 	return returnX;
 }
 
@@ -303,16 +318,30 @@ function findLeftAndRightOutPoint(train){
 			if((!thisPointInMap)&&previousPointInMap||(thisPointX<previousPointX&&previousPointInMap&&thisPointX!=LEFTMARGIN)){
 				mapEdgePoint.rightOut=true;
 				mapEdgePoint.rightOutStationNo=i;
-				mapEdgePoint.rightOutInStation=true;
-				mapEdgePoint.rightOutY=convertStationToYCoordinate(train.stops[i].stationName);
-				console.log(train.trainNo+"在"+train.stops[i].stationName+"出站前出图");
+				if(train.stops[i].arriveTime!="..."){
+					mapEdgePoint.rightOutInStation=true;
+					mapEdgePoint.rightOutY=convertStationToYCoordinate(train.stops[i].stationName);
+					console.log(train.trainNo+"在"+train.stops[i].stationName+"出站前出图");
+				}
+				else{
+					mapEdgePoint.rightOutInStation=false;
+					mapEdgePoint.rightOutY=calculateEdgePointY(train.stops[i-1].leaveTime==""?train.stops[i-1].arriveTime:train.stops[i-1].leaveTime,train.stops[i].leaveTime,train.stops[i-1].stationName,train.stops[i].stationName,ENDHOUR);
+					console.log(train.trainNo+"在通过"+train.stops[i].stationName+"前出图");
+				}
 			}
 			if(thisPointInMap&&!(previousPointInMap)||(thisPointX<previousPointX&&previousPointInMap&&thisPointX!=LEFTMARGIN)){
 				mapEdgePoint.leftIn=true;
 				mapEdgePoint.leftInStationNo=i;
-				mapEdgePoint.leftInInStation=true;
-				mapEdgePoint.leftInY=convertStationToYCoordinate(train.stops[i].stationName);
-				console.log(train.trainNo+"在"+train.stops[i].stationName+"出站前进图");
+				if(train.stops[i].arriveTime!="..."){
+					mapEdgePoint.leftInInStation=true;
+					mapEdgePoint.leftInY=convertStationToYCoordinate(train.stops[i].stationName);
+					console.log(train.trainNo+"在"+train.stops[i].stationName+"出站前进图");
+				}
+				else{
+					mapEdgePoint.leftInInStation=false;
+					mapEdgePoint.leftInY=calculateEdgePointY(train.stops[i-1].leaveTime==""?train.stops[i-1].arriveTime:train.stops[i-1].leaveTime,train.stops[i].leaveTime,train.stops[i-1].stationName,train.stops[i].stationName,ENDHOUR);
+					console.log(train.trainNo+"在通过"+train.stops[i].stationName+"前出图");
+				}
 			}
 			previousPointX=thisPointX;
 			previousPointInMap=thisPointInMap;
@@ -323,8 +352,13 @@ function findLeftAndRightOutPoint(train){
 
 //智能判断标线延长程度
 //TODO implement it
-function calculateSymbolConnectionLength(stationName,direction,symbolTime){
-	return 0;
+function calculateSymbolConnectionLength(stationName,direction,pointSpan){
+	for(k=0;k<3;k++){
+		if(!SpaceIndicator.isOverlap(stationName,direction,pointSpan,k)){
+			return k*EXTEND_LENGTH_UINT
+		}
+	}
+	return 3*EXTEND_LENGTH_UINT;
 }
 
 //计算出入图点位置
@@ -359,32 +393,33 @@ function trainLineColor(type){
 }
 
 //绘制始发标记
-function drawFirstDepatureSymbol(trainNo,type,stationName,time,direction){
-	var extendLength=calculateSymbolConnectionLength(stationName,direction,time);
+function drawFirstDepatureSymbol(trainNo,type,stationName,time,direction){	
 	var basePoint=convertTimeAndStationToCoordinate(time,stationName,false);
-	var halfLength=(trainNo.length/2+1.25)*SYMBOLUNIT
+	var halfLength=(trainNo.length/2+1)*SYMBOLUNIT
+	var extendLength=calculateSymbolConnectionLength(stationName,direction,[basePoint.x-halfLength,basePoint.x+halfLength]);
 	var polylinePoints=basePoint.x+","+basePoint.y;
-	polylinePoints+=" "+basePoint.x+","+(basePoint.y-direction*1.75*SYMBOLUNIT-direction*extendLength);
-	polylinePoints+=" "+(basePoint.x-halfLength)+","+(basePoint.y-direction*1.75*SYMBOLUNIT-direction*extendLength);
-	polylinePoints+=" "+(basePoint.x+halfLength)+","+(basePoint.y-direction*1.75*SYMBOLUNIT-direction*extendLength);
+	polylinePoints+=" "+basePoint.x+","+(basePoint.y-direction*1.25*SYMBOLUNIT-direction*extendLength);
+	polylinePoints+=" "+(basePoint.x-halfLength)+","+(basePoint.y-direction*1.25*SYMBOLUNIT-direction*extendLength);
+	polylinePoints+=" "+(basePoint.x+halfLength)+","+(basePoint.y-direction*1.25*SYMBOLUNIT-direction*extendLength);
 	svg.append("polyline")
 			.attr("class","drawFirstDepatureSymbol trainLine_"+trainNo)
 			.attr("points",polylinePoints)
 			.attr("stroke",trainLineColor(type))
-			.attr("stroke-width","1.5")
+			.attr("stroke-width",TRAINLINE_WIDTH)
 			.attr("fill","transparent");
 	svg.append("text")
-			.attr("class","firstDepatureTrainNo")
+			.attr("class","TrainNo")
 			.text(trainNo)
-			.attr("x",(basePoint.x-trainNo.length/2*8))
-			.attr("y",(basePoint.y-direction*1.75*SYMBOLUNIT-direction*(extendLength+3)))
+			.attr("x",(basePoint.x-halfLength+1))
+			.attr("y",(basePoint.y-direction*1.25*SYMBOLUNIT-direction*(extendLength+2)))
 			.attr("fill",trainLineColor(type));
+	SpaceIndicator.push(stationName,direction,extendLength/EXTEND_LENGTH_UINT,[basePoint.x-halfLength,basePoint.x+halfLength]);
 }	
 
 //绘制终到标记
 function drawTerminalArrivedSymbol(trainNo,type,stationName,time,direction){
-	var extendLength=calculateSymbolConnectionLength(stationName,direction,time);
 	var basePoint=convertTimeAndStationToCoordinate(time,stationName,true);
+	var extendLength=calculateSymbolConnectionLength(stationName,direction,[basePoint.x-SYMBOLUNIT,basePoint.x+SYMBOLUNIT]);
 	var polylinePoints=basePoint.x+","+basePoint.y;
 	polylinePoints+=" "+basePoint.x+","+(basePoint.y+direction*2*SYMBOLUNIT+direction*extendLength);
 	polylinePoints+=" "+(basePoint.x-SYMBOLUNIT)+","+(basePoint.y+direction*2*SYMBOLUNIT+direction*extendLength);
@@ -395,15 +430,15 @@ function drawTerminalArrivedSymbol(trainNo,type,stationName,time,direction){
 			.attr("class","terminalArrivalSymbol trainLine_"+trainNo)
 			.attr("points",polylinePoints)
 			.attr("stroke",trainLineColor(type))
-			.attr("stroke-width","1.5")
+			.attr("stroke-width",TRAINLINE_WIDTH)
 			.attr("fill","transparent");
-	//TODO 终到标记反馈
+	SpaceIndicator.push(stationName,direction,extendLength/EXTEND_LENGTH_UINT,[basePoint.x-SYMBOLUNIT,basePoint.x+SYMBOLUNIT]);
 }
 
 //绘制出图标记
 function drawOutMapSymbol(trainNo,type,stationName,time,direction){
-	var extendLength=calculateSymbolConnectionLength(stationName,direction,time);
 	var basePoint=convertTimeAndStationToCoordinate(time,stationName,true);
+	var extendLength=calculateSymbolConnectionLength(stationName,direction,[basePoint.x,basePoint.x+1.5*SYMBOLUNIT]);
 	var polylinePoints=basePoint.x+","+basePoint.y;
 	polylinePoints+=" "+basePoint.x+","+(basePoint.y+direction*2*SYMBOLUNIT+direction*extendLength);
 	polylinePoints+=" "+(basePoint.x+2*SYMBOLUNIT)+","+(basePoint.y+direction*2*SYMBOLUNIT+direction*extendLength);
@@ -414,16 +449,16 @@ function drawOutMapSymbol(trainNo,type,stationName,time,direction){
 			.attr("class","drawOutMapSymbol trainLine_"+trainNo)
 			.attr("points",polylinePoints)
 			.attr("stroke",trainLineColor(type))
-			.attr("stroke-width","1.5")
+			.attr("stroke-width",TRAINLINE_WIDTH)
 			.attr("fill","transparent");
-	//TO-DO 出图标记反馈
+	SpaceIndicator.push(stationName,direction,extendLength/EXTEND_LENGTH_UINT,[basePoint.x,basePoint.x+1.5*SYMBOLUNIT]);
 }
 
 //绘制入图标记
 function drawInMapSymbol(trainNo,type,stationName,time,direction){
-	var extendLength=calculateSymbolConnectionLength(stationName,direction,time);
 	var basePoint=convertTimeAndStationToCoordinate(time,stationName,false);
-	var lineLength=(trainNo.length+2.5)*SYMBOLUNIT
+	var lineLength=(trainNo.length+2)*SYMBOLUNIT
+	var extendLength=calculateSymbolConnectionLength(stationName,direction,[basePoint.x-lineLength,basePoint.x]);
 	var polylinePoints=basePoint.x+","+basePoint.y;
 	polylinePoints+=" "+basePoint.x+","+(basePoint.y-direction*1.75*SYMBOLUNIT-direction*extendLength);
 	polylinePoints+=" "+(basePoint.x-lineLength)+","+(basePoint.y-direction*1.75*SYMBOLUNIT-direction*extendLength);
@@ -431,14 +466,15 @@ function drawInMapSymbol(trainNo,type,stationName,time,direction){
 			.attr("class","drawInMapSymbol trainLine_"+trainNo)
 			.attr("points",polylinePoints)
 			.attr("stroke",trainLineColor(type))
-			.attr("stroke-width","1.5")
+			.attr("stroke-width",TRAINLINE_WIDTH)
 			.attr("fill","transparent");
 	svg.append("text")
-			.attr("class","InMapTrainNo")
+			.attr("class","TrainNo")
 			.text(trainNo)
-			.attr("x",(basePoint.x-trainNo.length*6-1.75*SYMBOLUNIT))
-			.attr("y",(basePoint.y-direction*1.75*SYMBOLUNIT-direction*(extendLength+3)))
+			.attr("x",(basePoint.x-lineLength+2))
+			.attr("y",(basePoint.y-direction*1.75*SYMBOLUNIT-direction*(extendLength+2)))
 			.attr("fill",trainLineColor(type));
+	SpaceIndicator.push(stationName,direction,extendLength/EXTEND_LENGTH_UINT,[basePoint.x-lineLength,basePoint.x]);
 }
 
 //绘制右侧出图线
@@ -451,7 +487,7 @@ function drawRightOutMap(trainNo,outPointY,type){
 			.attr("y1",outPointY)
 			.attr("y2",outPointY);
 	svg.append("text")
-			.attr("class","outMapTrainNo")
+			.attr("class","TrainNo")
 			.text(trainNo)
 			.attr("x",LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL+10)
 			.attr("y",outPointY-3)
@@ -468,7 +504,7 @@ function drawLeftInMap(trainNo,inPointY,type){
 			.attr("y1",inPointY)
 			.attr("y2",inPointY);
 	svg.append("text")
-			.attr("class","outMapTrainNo")
+			.attr("class","TrainNo")
 			.text(trainNo)
 			.attr("x",LEFTMARGIN-50+(6-trainNo.length)*6)
 			.attr("y",inPointY-3)
@@ -508,6 +544,6 @@ function drawInMapLine(train,stopNumberStart,stopNumberEnd,isLeftIn,isRightOut,m
 			.attr("class","terminalArrivalSymbol trainLine_"+train.trainNo)
 			.attr("points",trainLine)
 			.attr("stroke",trainLineColor(train.type))
-			.attr("stroke-width","1.5")
+			.attr("stroke-width",TRAINLINE_WIDTH)
 			.attr("fill","transparent");
 }
