@@ -52,7 +52,7 @@ namespace TrainDigramDataConverter
                     {
                         String stationName = stationDict[j];
                         String arriveTime = timeReader.ConvertTime(workListDataset.Tables[0].Rows[j][i].ToString());
-                        String leaveTime = timeReader.ConvertTime(workListDataset.Tables[0].Rows[j - 1][i].ToString()); td.AddStop(stationName, arriveTime, leaveTime);
+                        String leaveTime = timeReader.ConvertTime(workListDataset.Tables[0].Rows[j - 1][i].ToString()); 
                         if (arriveTime != "" || leaveTime != "")
                         {
                             td.AddStop(stationName, arriveTime, leaveTime);
