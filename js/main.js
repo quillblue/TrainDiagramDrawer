@@ -29,6 +29,7 @@ var TRAINLINE_WIDTH="1";
 
 
 $(document).ready(function(){
+	initConfiguration();
 	$("#title").html(MapTitle);
 	MAPHOURLENGTH=ENDHOUR==STARTHOUR?24:(ENDHOUR+24-STARTHOUR)%24;
 	$(".contentHolder").attr("style","width:"+(MAPHOURLENGTH*60*TIMEINTERVAL+300)+"px");
@@ -48,6 +49,35 @@ $(document).ready(function(){
 		}
 	}
 })
+
+//初始化参数配置
+function initConfiguration(){
+	var StartHourInput=getQueryString("start");
+	var EndHourInput=getQueryString("end");
+	var MarkStoptimeInput=getQueryString("stoptime");
+	var DirectionInput=getQueryString("direction");
+	if(StartHourInput!=null){
+		StartHourInput=parseInt(StartHourInput);
+		if(StartHourInput>=0&&StartHourInput<=24){STARTHOUR=StartHourInput;}
+	}
+
+	if(EndHourInput!=null){
+		EndHourInput=parseInt(EndHourInput);
+		if(EndHourInput>=0&&EndHourInput<=24){ENDHOUR=EndHourInput;}	
+	}
+
+	if(MarkStoptimeInput!=null){
+		if(MarkStoptimeInput.toLowerCase()=="on"){MARK_STOPTIME=true;}	
+	}
+
+	if(DirectionInput!=null){
+		switch(DirectionInput){
+			case "up":DIRECTION_FILTER=-1;return;
+			case "down":DIRECTION_FILTER=1;return;
+			default:DIRECTION_FILTER=0;return;
+		}
+	}
+}
 
 //初始化站名词典
 function initStationDictionary(){
@@ -98,6 +128,7 @@ function drawTimeLineImpl(timeOrder,type){
 		.attr("x2",LEFTMARGIN+TIMEINTERVAL*timeOrder*10)
 		.attr("y1",type=="hour"?20:TOPMARGEIN)
 		.attr("y2",TOPMARGEIN+MAPHEIGHT)
+		.attr("stroke-dasharray",type=="30min"?"8 3":"2 0")
 	if(type=="hour"){
 		var hourNo=(i/6+STARTHOUR)%24;
 		svg.append("text")
@@ -257,7 +288,7 @@ function drawTrain(train){
 				.attr("x",basePoint.x+1)
 				.attr("y",basePoint.y-train.direction*1.8)
 				.attr("fill",trainLineColor(train.type));
-			if(train.stops[i].leaveTime!=""&&decidePointInMap(train.stops[i].leaveTime,train.stops[i].stationName)&&MARK_ARRIVAL_ON_DEPATURE){
+			if(train.stops[i].leaveTime!=""&&decidePointInMap(train.stops[i].leaveTime,train.stops[i].stationName)&&MARK_STOPTIME){
 				var hourDelta=parseInt(train.stops[i].leaveTime.split(":")[0]-train.stops[i].arriveTime.split(":")[0]);
 				if(hourDelta<0){hourDelta+=24;}
 				var minuteDelta=parseInt(train.stops[i].leaveTime.split(":")[1]-train.stops[i].arriveTime.split(":")[1])
@@ -339,8 +370,8 @@ function findLeftAndRightOutPoint(train){
 				}
 				else{
 					mapEdgePoint.leftInInStation=false;
-					mapEdgePoint.leftInY=calculateEdgePointY(train.stops[i-1].leaveTime==""?train.stops[i-1].arriveTime:train.stops[i-1].leaveTime,train.stops[i].leaveTime,train.stops[i-1].stationName,train.stops[i].stationName,ENDHOUR);
-					console.log(train.trainNo+"在通过"+train.stops[i].stationName+"前出图");
+					mapEdgePoint.leftInY=calculateEdgePointY(train.stops[i-1].leaveTime==""?train.stops[i-1].arriveTime:train.stops[i-1].leaveTime,train.stops[i].leaveTime,train.stops[i-1].stationName,train.stops[i].stationName,STARTHOUR);
+					console.log(train.trainNo+"在通过"+train.stops[i].stationName+"前进图");
 				}
 			}
 			previousPointX=thisPointX;
@@ -541,9 +572,32 @@ function drawInMapLine(train,stopNumberStart,stopNumberEnd,isLeftIn,isRightOut,m
 		trainLine+=" "+(LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL)+","+mapEdgePoint.rightOutY;
 	}
 	svg.append("polyline")
-			.attr("class","terminalArrivalSymbol trainLine_"+train.trainNo)
+			.attr("class","InMapLine trainLine_"+train.trainNo)
 			.attr("points",trainLine)
 			.attr("stroke",trainLineColor(train.type))
 			.attr("stroke-width",TRAINLINE_WIDTH)
-			.attr("fill","transparent");
+			.attr("fill","transparent")
+			.on("mouseover",function(){
+				console.log(d3.mouse());
+				//alert(train.trainNo);
+			})
+			.on("mouseout",function(){
+				//alert(1);
+			});
+
+}
+
+//鼠标移入函数
+function drawScheduleTooltip(train,d){
+
+}
+
+//获取queryString
+function getQueryString(name){
+	name="?"+name;
+	var reg=new RegExp("(^l&)"+name+"=([^&]*)(&|$)","i");
+	var queryString=location.search.substr(1)
+	var r=queryString.match(reg);
+	if(r!=null){return unescape(decodeURI(r[2]));}
+	else{return null;}
 }
