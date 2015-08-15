@@ -13,7 +13,7 @@ var EXTEND_LENGTH_UINT=15;
 // 运行图第一站横线距离画布顶端的距离
 var TOPMARGEIN=80;
 // 运行图高度
-var MAPHEIGHT=850;
+var MAPHEIGHT=800;
 // 画布
 var svg=d3.select("#map");
 // 里程表中最小里程
@@ -88,11 +88,20 @@ function initStationDictionary(){
 	}
 	for(i=0;i<SubLineStationData.length;i++){
 		var subline=SubLineStationData[i];
-		MAXPOS+=30;
-		for(j=0;j<subline.length;j++){
-			StationDictionary[subline[j].uniqueName]=subline[j].position+MAXPOS;
+		if(SubLineStationData[i].direction==1){
+			MAXPOS+=30;
+			for(j=0;j<subline.stations.length;j++){
+				StationDictionary[subline.stations[j].uniqueName]=subline.stations[j].position+MAXPOS;
+			}
+			MAXPOS=MAXPOS+subline.stations[subline.stations.length-1].position;
 		}
-		MAXPOS=MAXPOS+subline[subline.length-1].position;
+		else{
+			MINPOS-=30;
+			for(j=0;j<subline.stations.length;j++){
+				StationDictionary[subline.stations[j].uniqueName]=MINPOS-subline.stations[j].position;
+			}
+			MINPOS=MINPOS-subline.stations[subline.stations.length-1].position;
+		}
 	}
 }
 
@@ -100,7 +109,7 @@ function initStationDictionary(){
 function initSpaceIndicator(){
 	var stationList=StationData;
 	for(i=0;i<SubLineStationData.length;i++){
-		stationList=stationList.concat(SubLineStationData[i]);
+		stationList=stationList.concat(SubLineStationData[i].stations);
 	}
 	SpaceIndicator.init(stationList);
 }
@@ -167,19 +176,19 @@ function drawStationLine(){
 	}
 	for(i=0;i<SubLineStationData.length;i++){
 		var subline=SubLineStationData[i];
-		for(j=0;j<subline.length;j++){
+		for(j=0;j<subline.stations.length;j++){
 			svg.append("line")
 				.attr("class","stationLine")
 				.style("stroke","#090")
 				.attr("x1",0)
 				.attr("x2",LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL)
-				.attr("y1",convertStationToYCoordinate(subline[j].uniqueName))
-				.attr("y2",convertStationToYCoordinate(subline[j].uniqueName));
+				.attr("y1",convertStationToYCoordinate(subline.stations[j].uniqueName))
+				.attr("y2",convertStationToYCoordinate(subline.stations[j].uniqueName));
 			svg.append("text")
 				.attr("class","stationName")
-				.text(subline[j].name)
+				.text(subline.stations[j].name)
 				.attr("x",3)
-				.attr("y",convertStationToYCoordinate(subline[j].uniqueName)-5);
+				.attr("y",convertStationToYCoordinate(subline.stations[j].uniqueName)-5);
 		}
 	}
 }
@@ -231,8 +240,8 @@ function decidePointInMapByPointX(pointX){
 //是否为支线站
 function isStationOnSubline(stationName){
 	for(l=0;l<SubLineStationData.length;l++){
-		for(m=1;m<SubLineStationData[l].length;m++){
-			if(SubLineStationData[l][m].name==stationName){return true;}
+		for(m=1;m<SubLineStationData[l].stations.length;m++){
+			if(SubLineStationData[l].stations[m].name==stationName){return true;}
 		}
 	}
 	return false;
@@ -251,8 +260,8 @@ function drawTrain(train){
 		drawFirstDepatureSymbol(train.trainNo,train.type,train.stops[0].stationName,train.stops[0].leaveTime,train.direction);
 	}
 	else{
-		if(decidePointInMapByPointX(convertTimeToXCoordinate(train.stops[0].arriveTime,true))){
-			drawInMapSymbol(train.trainNo,train.type,train.stops[0].stationName,train.stops[0].arriveTime,train.direction);
+		if(decidePointInMapByPointX(convertTimeToXCoordinate((train.stops[0].arriveTime!=""&&train.stops[0].arriveTime!="...")?train.stops[0].arriveTime:train.stops[0].leaveTime,true))){
+			drawInMapSymbol(train.trainNo,train.type,train.stops[0].stationName,(train.stops[0].arriveTime!=""&&train.stops[0].arriveTime!="...")?train.stops[0].arriveTime:train.stops[0].leaveTime,train.direction);
 		}
 	}
 	//绘制终到、出图标记
@@ -293,10 +302,10 @@ function drawTrain(train){
 			var basePoint=convertTimeAndStationToCoordinate(train.stops[i].arriveTime,train.stops[i].stationName,!(i==0));
 			var text=train.stops[i].arriveTime.split(":")[1][1];
 			svg.append("text")
-				.attr("class","timeDigit")
+				.attr("class","timeDigit trainDigit_"+train.trainNo)
 				.text(text)
 				.attr("x",basePoint.x+1)
-				.attr("y",basePoint.y-train.direction*1.8)
+				.attr("y",basePoint.y+(train.direction==1?-1:9))
 				.attr("fill",trainLineColor(train.type));
 			if(train.stops[i].leaveTime!=""&&decidePointInMap(train.stops[i].leaveTime,train.stops[i].stationName)&&MARK_STOPTIME){
 				var hourDelta=parseInt(train.stops[i].leaveTime.split(":")[0]-train.stops[i].arriveTime.split(":")[0]);
@@ -304,10 +313,10 @@ function drawTrain(train){
 				var minuteDelta=parseInt(train.stops[i].leaveTime.split(":")[1]-train.stops[i].arriveTime.split(":")[1])
 				var text=hourDelta*60+minuteDelta;
 				svg.append("text")
-					.attr("class","timeDigitSmall")
+					.attr("class","timeDigitSmall trainDigitSmall_"+train.trainNo)
 					.text(text)
-					.attr("x",basePoint.x+train.direction*6)
-					.attr("y",basePoint.y-train.direction*2)
+					.attr("x",basePoint.x+6)
+					.attr("y",basePoint.y+(train.direction==1?-1:9))
 					.attr("fill","#666");
 			}
 		}
@@ -315,10 +324,10 @@ function drawTrain(train){
 			var basePoint=convertTimeAndStationToCoordinate(train.stops[i].leaveTime,train.stops[i].stationName,!(i==0&&(train.stops[i].arriveTime==""||train.stops[i].arriveTime=="...")));
 			var text=train.stops[i].leaveTime.split(":")[1][1];
 			svg.append("text")
-				.attr("class","timeDigit")
+				.attr("class","timeDigit trainDigit_"+train.trainNo)
 				.text(text)
-				.attr("x",basePoint.x-train.direction*6)
-				.attr("y",basePoint.y+train.direction*12)
+				.attr("x",basePoint.x-5)
+				.attr("y",basePoint.y+(train.direction==1?9:-2))
 				.attr("fill",trainLineColor(train.type));
 			
 		}
@@ -330,20 +339,20 @@ function findLeftAndRightOutPoint(train){
 	var mapEdgePoint=new Object();
 	mapEdgePoint.leftIn=false;
 	mapEdgePoint.rightOut=false;
-	var previousPointX=convertTimeToXCoordinate(train.stops[0].arriveTime!=""?train.stops[0].arriveTime:train.stops[0].leaveTime,false);
+	var previousPointX=convertTimeToXCoordinate((train.stops[0].arriveTime!=""&&train.stops[0].arriveTime!="...")?train.stops[0].arriveTime:train.stops[0].leaveTime,false);
 	var previousPointInMap=decidePointInMapByPointX(previousPointX)
 	for(i=0;i<train.stops.length;i++){
 		if(train.stops[i].arriveTime!=""&&train.stops[i].arriveTime!="..."){
 			var thisPointX=convertTimeToXCoordinate(train.stops[i].arriveTime,false);
 			var thisPointInMap=decidePointInMapByPointX(thisPointX);
-			if((!thisPointInMap)&&previousPointInMap||(thisPointX<previousPointX&&previousPointInMap&&thisPointX!=LEFTMARGIN)){
+			if((!thisPointInMap)&&previousPointInMap||(thisPointX<previousPointX&&previousPointInMap&&!(i==train.stops.length-1&&thisPointX==LEFTMARGIN))){
 				mapEdgePoint.rightOut=true;
 				mapEdgePoint.rightOutStationNo=i;
 				mapEdgePoint.rightOutInStation=false;
 				mapEdgePoint.rightOutY=calculateEdgePointY(train.stops[i-1].leaveTime==""?train.stops[i-1].arriveTime:train.stops[i-1].leaveTime,train.stops[i].arriveTime,train.stops[i-1].stationName,train.stops[i].stationName,ENDHOUR);
 				console.log(train.trainNo+"在"+train.stops[i].stationName+"进站前出图");
 			}
-			if(thisPointInMap&&!(previousPointInMap)||(thisPointX<previousPointX&&previousPointInMap&&thisPointX!=LEFTMARGIN)){
+			if(thisPointInMap&&!(previousPointInMap)||(thisPointX<previousPointX&&previousPointInMap&&!(i==train.stops.length-1&&thisPointX==LEFTMARGIN))){
 				mapEdgePoint.leftIn=true;
 				mapEdgePoint.leftInStationNo=i;
 				mapEdgePoint.leftInInStation=false;
@@ -356,7 +365,7 @@ function findLeftAndRightOutPoint(train){
 		if(train.stops[i].leaveTime!=""){
 			var thisPointX=convertTimeToXCoordinate(train.stops[i].leaveTime,false);
 			var thisPointInMap=decidePointInMapByPointX(thisPointX);
-			if((!thisPointInMap)&&previousPointInMap||(thisPointX<previousPointX&&previousPointInMap&&thisPointX!=LEFTMARGIN)){
+			if((!thisPointInMap)&&previousPointInMap||(thisPointX<previousPointX&&previousPointInMap&&!(i==train.stops.length-1&&thisPointX==LEFTMARGIN))){
 				mapEdgePoint.rightOut=true;
 				mapEdgePoint.rightOutStationNo=i;
 				if(train.stops[i].arriveTime!="..."){
@@ -370,7 +379,7 @@ function findLeftAndRightOutPoint(train){
 					console.log(train.trainNo+"在通过"+train.stops[i].stationName+"前出图");
 				}
 			}
-			if(thisPointInMap&&!(previousPointInMap)||(thisPointX<previousPointX&&previousPointInMap&&thisPointX!=LEFTMARGIN)){
+			if(thisPointInMap&&!(previousPointInMap)||(thisPointX<previousPointX&&previousPointInMap&&!(i==train.stops.length-1&&thisPointX==LEFTMARGIN))){
 				mapEdgePoint.leftIn=true;
 				mapEdgePoint.leftInStationNo=i;
 				if(train.stops[i].arriveTime!="..."){
@@ -449,10 +458,10 @@ function drawFirstDepatureSymbol(trainNo,type,stationName,time,direction){
 			.attr("stroke-width",TRAINLINE_WIDTH)
 			.attr("fill","transparent");
 	svg.append("text")
-			.attr("class","TrainNo")
+			.attr("class","TrainNo trainDigit_"+trainNo)
 			.text(trainNo)
 			.attr("x",(basePoint.x-halfLength+1))
-			.attr("y",(basePoint.y-direction*1.25*SYMBOLUNIT-direction*(extendLength+2)))
+			.attr("y",(basePoint.y-direction*(extendLength+2)+(direction==1?-6:16)))
 			.attr("fill",trainLineColor(type));
 	SpaceIndicator.push(stationName,direction,extendLength/EXTEND_LENGTH_UINT,[basePoint.x-halfLength,basePoint.x+halfLength]);
 }	
@@ -487,7 +496,7 @@ function drawOutMapSymbol(trainNo,type,stationName,time,direction){
 	polylinePoints+=" "+(basePoint.x+2*SYMBOLUNIT)+","+(basePoint.y+direction*2*SYMBOLUNIT+direction*extendLength);
 	polylinePoints+=" "+(basePoint.x+1.25*SYMBOLUNIT)+","+(basePoint.y+direction*2.75*SYMBOLUNIT+direction*extendLength);
 	svg.append("polyline")
-			.attr("class","drawOutMapSymbol trainLine_"+trainNo)
+			.attr("class","outMapSymbol trainLine_"+trainNo)
 			.attr("points",polylinePoints)
 			.attr("stroke",trainLineColor(type))
 			.attr("stroke-width",TRAINLINE_WIDTH)
@@ -504,16 +513,16 @@ function drawInMapSymbol(trainNo,type,stationName,time,direction){
 	polylinePoints+=" "+basePoint.x+","+(basePoint.y-direction*1.75*SYMBOLUNIT-direction*extendLength);
 	polylinePoints+=" "+(basePoint.x-lineLength)+","+(basePoint.y-direction*1.75*SYMBOLUNIT-direction*extendLength);
 	svg.append("polyline")
-			.attr("class","drawInMapSymbol trainLine_"+trainNo)
+			.attr("class","inMapSymbol trainLine_"+trainNo)
 			.attr("points",polylinePoints)
 			.attr("stroke",trainLineColor(type))
 			.attr("stroke-width",TRAINLINE_WIDTH)
 			.attr("fill","transparent");
 	svg.append("text")
-			.attr("class","TrainNo")
+			.attr("class","TrainNo trainDigit_"+trainNo)
 			.text(trainNo)
 			.attr("x",(basePoint.x-lineLength+2))
-			.attr("y",(basePoint.y-direction*1.75*SYMBOLUNIT-direction*(extendLength+2)))
+			.attr("y",(basePoint.y-direction*(extendLength+2)+(direction==1?-6:16)))
 			.attr("fill",trainLineColor(type));
 	SpaceIndicator.push(stationName,direction,extendLength/EXTEND_LENGTH_UINT,[basePoint.x-lineLength,basePoint.x]);
 }
@@ -521,14 +530,14 @@ function drawInMapSymbol(trainNo,type,stationName,time,direction){
 //绘制右侧出图线
 function drawRightOutMap(trainNo,outPointY,type){
 	svg.append("line")
-			.attr("class","rightOutMapLine MapLine"+trainNo)
+			.attr("class","rightOutMapLine trainLine_"+trainNo)
 			.style("stroke",trainLineColor(type))
 			.attr("x1",LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL)
 			.attr("x2",LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL+60-(6-trainNo.length)*6)
 			.attr("y1",outPointY)
 			.attr("y2",outPointY);
 	svg.append("text")
-			.attr("class","TrainNo")
+			.attr("class","TrainNo trainDigit_"+trainNo)
 			.text(trainNo)
 			.attr("x",LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL+10)
 			.attr("y",outPointY-3)
@@ -538,14 +547,14 @@ function drawRightOutMap(trainNo,outPointY,type){
 //绘制左侧入图线
 function drawLeftInMap(trainNo,inPointY,type){
 	svg.append("line")
-			.attr("class","leftInMapLine MapLine"+trainNo)
+			.attr("class","leftInMapLine trainLine_"+trainNo)
 			.style("stroke",trainLineColor(type))
 			.attr("x1",LEFTMARGIN-60+(6-trainNo.length)*6)
 			.attr("x2",LEFTMARGIN)
 			.attr("y1",inPointY)
 			.attr("y2",inPointY);
 	svg.append("text")
-			.attr("class","TrainNo")
+			.attr("class","TrainNo trainDigit_"+trainNo)
 			.text(trainNo)
 			.attr("x",LEFTMARGIN-50+(6-trainNo.length)*6)
 			.attr("y",inPointY-3)
@@ -594,11 +603,41 @@ function drawInMapLine(train,stopNumberStart,stopNumberEnd,isLeftIn,isRightOut,m
 			.attr("stroke-width",TRAINLINE_WIDTH)
 			.attr("fill","transparent")
 			.on("mouseover",function(){
-				console.log(d3.mouse());
-				//alert(train.trainNo);
+				svg.selectAll(".trainLine_"+train.trainNo)
+				   .transition()
+				   .duration(500)
+				   .attr("stroke-width","2.5")
+				   .attr("stroke","#c09");
+				svg.selectAll(".trainDigit_"+train.trainNo)
+				   .transition()
+				   .duration(500)
+				   .style("font-size","12px")
+				   .style("font-weight","bold")
+				   .style("fill","#c09")
+				   .style("z-index","10");
+				svg.selectAll(".trainDigitSmall_"+train.trainNo)
+				   .transition()
+				   .duration(500)
+				   .style("fill","transparent")
+
 			})
 			.on("mouseout",function(){
-				//alert(1);
+				svg.selectAll(".trainLine_"+train.trainNo)
+				   .transition()
+				   .duration(500)
+				   .attr("stroke-width",TRAINLINE_WIDTH)
+				   .attr("stroke",trainLineColor(train.type));
+				svg.selectAll(".trainDigit_"+train.trainNo)
+				   .transition()
+				   .duration(500)
+				   .style("font-size","10px")
+				   .style("font-weight","normal")
+				   .style("fill",trainLineColor(train.type))
+				   .style("z-index","1");
+				svg.selectAll(".trainDigitSmall_"+train.trainNo)
+				   .transition()
+				   .duration(500)
+				   .style("fill","#666")
 			});
 
 }

@@ -19,8 +19,13 @@ var LINEDATA_HUKUNHIGHWAY_HUHANG={
 				{name:"余杭",uniqueName:"余杭",position:177},
 				{name:"笕桥线路所",uniqueName:"笕桥线路所",position:179},
 				{name:"杭州东",uniqueName:"杭州东(沪杭长场)",position:192}],
-	SubLineConnectionStation:{"笕桥线路所":"杭州东(沪杭长场)"},
-	SubLineStationData:[[{name:"笕桥线路所",uniqueName:"笕桥线路所(笕桥方向)",position:0},
-				{name:"笕桥",uniqueName:"笕桥",position:19},
-				{name:"杭州",uniqueName:"杭州",position:25}]]
+	SubLineConnectionStation:{"笕桥线路所":"杭州东(沪杭长场)","春申线路所":"七宝线路所"},
+	SubLineStationData:[{remark:"笕桥联络线-杭州线",direction:1,stations:[{name:"笕桥线路所",uniqueName:"笕桥线路所(笕桥方向)",position:0},
+				{name:"笕桥",uniqueName:"笕桥",position:11},
+				{name:"艮山门",uniqueName:"艮山门",position:17},
+				{name:"杭州",uniqueName:"杭州",position:23}]},
+				{remark:"春申联络线-上海南线",direction:-1,stations:[{name:"春申线路所",uniqueName:"春申线路所(新桥方向)",position:0},
+				{name:"新桥",uniqueName:"新桥",position:2},
+				{name:"上海南",uniqueName:"上海南",position:12}]}
+				]
 }
