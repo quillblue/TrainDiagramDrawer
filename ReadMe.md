@@ -22,9 +22,12 @@
 ### HTTP QueryString API
 本Repo支持在不修改js文件的情况下在浏览器地址栏中使用QueryString进行运行图辅画的部分设置，它们包括：
 
-||参数名||解释||可选值||默认值||	
-||`start`|| 输出的运行图分片开始时间||0~24||18||
-||`end`||输出的运行图分片结束时间||0~24||18||
-||`stoptime`||是否在运行图上标注停车时间（以方便在打印时能够辨别越行情况）||on/off||off||
-||`direction`||显示上行/下行方向的运行图||up/down/all||all||
+<table>
+<tr><td>参数名</td><td>解释</td><td>可选值</td><td>默认值</td></tr>
+<tr><td>start</td><td>输出的运行图分片开始时间</td><td>0~24</td><td>18</td></tr>
+<tr><td>end</td><td>输出的运行图分片结束时间</td><td>0~24</td><td>18</td></tr>
+<tr><td>stoptime</td><td>是否在运行图上标注停车时间（以方便在打印时能够辨别越行情况）</td><td>on/off</td><td>off</td></tr>
+<tr><td>direction</td><td>显示上行/下行方向的运行图</td><td>up/down/all</td><td>all</td></tr>
+</table>
+
 
