@@ -1,31 +1,32 @@
-/*
+﻿/*
 * Create By Quillblue on 2015-7-8
 * Data Config File
 */
 
-//沪昆高速线沪杭段里程表（上海-上海虹桥-笕桥线路所-杭州东/杭州）
-var LINEDATA_HUKUNHIGHWAY_HUHANG={
-	StationData:[{name:"上海",uniqueName:"上海",position:0},
-				{name:"上海虹桥(综合场)",uniqueName:"上海虹桥(综合场)",position:30},
-				{name:"上海虹桥(高速场)",uniqueName:"上海虹桥(高速场)",position:33},
-				{name:"七宝线路所",uniqueName:"七宝线路所",position:38},
-				{name:"春申线路所",uniqueName:"春申线路所",position:52},
-				{name:"松江南",uniqueName:"松江南",position:64},
-				{name:"金山北",uniqueName:"金山北",position:81},
-				{name:"嘉善南",uniqueName:"嘉善南",position:100},
-				{name:"嘉兴南",uniqueName:"嘉兴南",position:117},
-				{name:"桐乡",uniqueName:"桐乡",position:145},
-				{name:"海宁西",uniqueName:"海宁西",position:166},
-				{name:"余杭",uniqueName:"余杭",position:177},
-				{name:"笕桥线路所",uniqueName:"笕桥线路所",position:179},
-				{name:"杭州东",uniqueName:"杭州东(沪杭长场)",position:192}],
-	SubLineConnectionStation:{"笕桥线路所":"杭州东(沪杭长场)","春申线路所":"七宝线路所"},
-	SubLineStationData:[{remark:"笕桥联络线-杭州线",direction:1,stations:[{name:"笕桥线路所",uniqueName:"笕桥线路所(笕桥方向)",position:0},
-				{name:"笕桥",uniqueName:"笕桥",position:11},
-				{name:"艮山门",uniqueName:"艮山门",position:17},
-				{name:"杭州",uniqueName:"杭州",position:23}]},
-				{remark:"春申联络线-上海南线",direction:-1,stations:[{name:"春申线路所",uniqueName:"春申线路所(新桥方向)",position:0},
-				{name:"新桥",uniqueName:"新桥",position:2},
-				{name:"上海南",uniqueName:"上海南",position:12}]}
-				]
-}
+//京沪线徐蚌段里程表
+var LINEDATA_JINGHU_XUBENG={
+	StationData:[{name:"徐州",uniqueName:"徐州",position:0},
+		{name:"高家营",uniqueName:"高家营",position:8},
+		{name:"三铺",uniqueName:"三铺",position:15},
+		{name:"曹村",uniqueName:"曹村",position:30},
+		{name:"夹沟*",uniqueName:"夹沟*",position:44},
+		{name:"符离集",uniqueName:"符离集",position:60},
+		{name:"宿州",uniqueName:"宿州",position:74},
+		{name:"宿州南",uniqueName:"宿州南",position:78},
+		{name:"西寺坡",uniqueName:"西寺坡",position:91},
+		{name:"芦岭",uniqueName:"芦岭",position:99},
+		{name:"唐南集",uniqueName:"唐南集",position:115},
+		{name:"固镇",uniqueName:"固镇",position:121},
+		{name:"连城",uniqueName:"连城",position:129},
+		{name:"新马桥",uniqueName:"新马桥",position:136},
+		{name:"曹老集",uniqueName:"曹老集",position:151},
+		{name:"蚌埠",uniqueName:"蚌埠",position:164}],
+
+SubLineConnectionStation:{"高家营":"徐州","曹老集":"蚌埠"},
+SubLineStationData:[{remark:"徐州货线",direction:-1,stations:[{name:"高家营",uniqueName:"高家营(徐州南方向)",position:0},
+		{name:"徐州南",uniqueName:"徐州南",position:8},
+		{name:"徐州北上到下发",uniqueName:"徐州北上到下发",position:11},
+		{name:"徐州北下到上发",uniqueName:"徐州北下到上发",position:13}]},
+{remark:"曹山线",direction:1,stations:[{name:"曹老集",uniqueName:"曹老集(曹山方向)",position:0},
+		{name:"曹山",uniqueName:"曹山",position:14},
+		{name:"蚌埠东",uniqueName:"蚌埠东",position:22}]}]}

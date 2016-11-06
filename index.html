@@ -1,24 +1,105 @@
 <html>
 <head>
 	<meta charset="UTF-8">
-	<title>RountingMap by Quillblue</title>
+	<title>sTMIS 2.0</title>
 	<link rel="stylesheet" type="text/css" href="css/trainmap.css">
+	 <link rel="stylesheet" type="text/css" href="css/zTreeStyle/zTreeStyle.css"  />
 </head>
 <body>
 	<div class="contentHolder">
-	<div id="title">
-		Name of Map Here
+	<div id="toolbar">
+		<span class="logo">sTIMS 2.0</span>
+		<span class="lineTitle">京沪线 徐州-蚌埠段</span>
+		&nbsp;&nbsp;&nbsp;
+		<span>时间范围：</span>
+		<select id="startTimeSelect">
+			<option value="18">18:00</option>
+			<option value="19">19:00</option>
+			<option value="20">20:00</option>
+			<option value="21">21:00</option>
+			<option value="22">22:00</option>
+			<option value="23">23:00</option>
+			<option value="0">00:00</option>
+			<option value="1">01:00</option>
+			<option value="2">02:00</option>
+			<option value="3">03:00</option>
+			<option value="4">04:00</option>
+			<option value="5">05:00</option>
+			<option value="6">06:00</option>
+			<option value="7">07:00</option>
+			<option value="8">08:00</option>
+			<option value="9">09:00</option>
+			<option value="10">10:00</option>
+			<option value="11">11:00</option>
+			<option value="12">12:00</option>
+			<option value="13">13:00</option>
+			<option value="14">14:00</option>
+			<option value="15">15:00</option>
+			<option value="16">16:00</option>
+			<option value="17">17:00</option>
+		</select>
+		<span>~</span>
+		<select id="endTimeSelect">
+			<option value="18">18:00</option>
+			<option value="19">19:00</option>
+			<option value="20">20:00</option>
+			<option value="21">21:00</option>
+			<option value="22">22:00</option>
+			<option value="23">23:00</option>
+			<option value="0">00:00</option>
+			<option value="1">01:00</option>
+			<option value="2">02:00</option>
+			<option value="3">03:00</option>
+			<option value="4">04:00</option>
+			<option value="5">05:00</option>
+			<option value="6">06:00</option>
+			<option value="7">07:00</option>
+			<option value="8">08:00</option>
+			<option value="9">09:00</option>
+			<option value="10">10:00</option>
+			<option value="11">11:00</option>
+			<option value="12">12:00</option>
+			<option value="13">13:00</option>
+			<option value="14">14:00</option>
+			<option value="15">15:00</option>
+			<option value="16">16:00</option>
+			<option value="17">17:00</option>
+		</select>
+		&nbsp;&nbsp;&nbsp;
+		<select id="direction">
+			<option value="0">上下行</option>
+			<option value="-1">上行</option>
+			<option value="1">下行</option>
+		</select>
+		&nbsp;&nbsp;&nbsp;
+		<button id="btnRefresh">刷新</button>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<input id="checkSideNavShow" type="checkbox" checked>显示选择线路面板
 	</div>
-	<div class="content">
-		<svg id="map"></svg>
+	<div id="sideNav">
+		<div class="lineTitle">选择线路</div>
+		<div id="lineTree" class="ztree">
+
+		</div>
+	</div>
+	<div id="rightContainer">
+		<div id="stationCanvasContainer">
+			<svg id="stationCanvas"></svg>
+		</div>
+		<div id="digramContainer">
+			<svg id="map"></svg>
+		</div>
+		<div style="clear:both"></div>
 	</div>
 	</div>
 	<script type="text/javascript" src="js/jquery-2.0.3.js"></script>
+	<script type="text/javascript" src="js/jquery.ztree.core-3.5.min.js"></script>
 	<script type="text/javascript" src="js/d3.min.js"></script>
 	<script type="text/javascript" src="js/dataTemplate.js"></script>
 	<script type="text/javascript" src="js/spaceStack.js"></script>
 	<script type="text/javascript" src="js/data.js"></script>
-	<script type="text/javascript" src="js/main.js"></script>
+	<script type="text/javascript" src="js/sTMIS.js"></script>
+	<script type="text/javascript" src="js/lineTree.js"></script>
 
 </body>
 </html>

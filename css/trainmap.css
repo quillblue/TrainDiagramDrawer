@@ -1,20 +1,56 @@
-﻿body{
+body{
+	margin:0px;
 	font-family: "微软雅黑";
 	font-size: 12px;
 }
 
 .contentHolder{
-	text-align: center;
+	
 }
 
-#title{
-	font-size: 26px;
-	font-weight: bold;
-	margin-bottom: 10px;
+#toolbar{
+	padding:20px 40px;
 }
 
-#map{
-	height:1000px;
+	.logo{
+		padding-right: 50px;
+		text-align: center;
+		font-size: 24px;
+	}
+
+	.lineTitle{
+		margin-left: 15px;
+		color:#090;
+		font-size: 18px;
+	}
+
+
+#sideNav{
+	float:left;
+	width:20%;
+	height: 90%;
+	max-width: 200px;
+	margin-right: 10px;
+	border-right:1px solid #999;
+	overflow: auto;
+}
+
+iframe{
+	border: none;
+	overflow: scroll;
+}
+
+#stationCanvasContainer{
+	float: left;
+	width:100px;
+}
+
+#digramContainer{
+	position:relative;
+	margin-left: 20px;
+	overflow-x: scroll;
+	overflow-y:hidden;
+	scroll-y:none;
 }
 
 .timeDigitSmall{
