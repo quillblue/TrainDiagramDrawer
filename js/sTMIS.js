@@ -26,10 +26,14 @@ var StationDictionary=new Object();
 // 运行线宽度
 var TRAINLINE_WIDTH="1";
 
+var STATION_DATA, SUBLINE_CONNECTION_DATA, SUBLINE_STATION_DATA;
+
+var DOWN_TRAIN_DATA, UP_TRAIN_DATA;
+
 //Intialize Functions
 $(document).ready(function(){
 	lineTree.init();
-	canvasInitialize('',18,18);
+	canvasInitialize('JINGHU_XUBENG');
 	$('#checkSideNavShow').change(function(){
 		if(document.getElementById('checkSideNavShow').checked){
 			$('#sideNav').show();
@@ -38,6 +42,12 @@ $(document).ready(function(){
 			$('#sideNav').hide();
 		}
 	})
+	$('#btnRefresh').click(function(){
+		STARTHOUR=parseInt($('#startTimeSelect').val());
+		ENDHOUR=parseInt($('#endTimeSelect').val());
+		DIRECTION_FILTER= parseInt($('#direction').val());
+		canvasInitialize()
+	});
 	// if(DIRECTION_FILTER>=0){
 	// 	for(j=0;j<DownTrainData.length;j++){
 	// 		drawTrain(DownTrainData[j]);
@@ -50,28 +60,41 @@ $(document).ready(function(){
 	// }
 })
 
-//更新整个运行图区域（切换线路）
-function canvasInitialize(lineName, startTime, endTime){
+//更新整个运行图区域（切换线路.时间范围）
+function canvasInitialize(lineName){
 	$(".digram").remove();
-	initStationDictionary();
-	initSpaceIndicator();
-	MAPHOURLENGTH=ENDHOUR==STARTHOUR?24:(ENDHOUR+24-STARTHOUR)%24;
+	$(".baseGrid").remove();
+	if(lineName){
+		$.ajax({
+  			url: 'data/'+lineName+'.json',
+  			success: function(data){
+  				STATION_DATA=data.StationData;
+  				SUBLINE_STATION_DATA=data.SubLineStationData;
+  				SUBLINE_CONNECTION_DATA=data.SublineConnectionData;
+  				UP_TRAIN_DATA=data.UpTrainData;
+  				DOWN_TRAIN_DATA=data.DOWN_TRAIN_DATA;
+  				initStationDictionary();
+				initSpaceIndicator();
+  			},
+  			dataType: 'json',
+  			error:function(){
+  				alert('获取相关线路信息出错')
+  			}
+		});
+	}
+	MAPHOURLENGTH=ENDHOUR==STARTHOUR?24:(ENDHOUR-STARTHOUR+24)%24;
 	$("#map").attr("width",MAPHOURLENGTH*60*TIMEINTERVAL+LEFTMARGIN+50+"px");
 	$("#map").css("height",MAPHEIGHT+150);
 	$("#stationCanvas").css("height",MAPHEIGHT+150);
 	drawTimeLine();
 	drawStationLine();
+	switch(direction){
+		case 1:$(".upTrain").hide();$(".downTrain").show();break;
+		case -1:$(".downTrain").hide();$(".upTrain").show();break;
+		case 0:$(".trainLine").show();
+	}
 }
 
-//更新时间范围
-function changeTimePeriod(startTime, endTime){
-	
-	$(".baseGrid").remove();
-
-	//ClearTrainLine And BaseGrid
-
-
-}
 
 //更新上下行筛选
 function directionFilterChange(direction){
@@ -82,15 +105,10 @@ function directionFilterChange(direction){
 	}
 }
 
-//刷新按钮点击时的处理函数
-function btnRefreshClick(){
-
-}
-
-
 
 //初始化站名词典
 function initStationDictionary(){
+	var StationDictionary=new Object();
 	MINPOS=StationData[0].position;
 	MAXPOS=StationData[StationData.length-1].position;
 	for(i=0;i<StationData.length;i++){
@@ -165,7 +183,7 @@ function drawTimeLine(){
 			.attr("y2",36)
 		//时间轴文字
 		if(type=="hour"){
-			var hourNo=(i/6+STARTHOUR)%24;
+			var hourNo=(STARTHOUR+i/6)%24;
 			svg.append("text")
 				.attr("class","baseGrid timeLine")
 				.text(hourNo)
@@ -198,7 +216,7 @@ function timeLineColor(type){
 function drawStationLine(){
 	for(i=0;i<StationData.length;i++){
 		svg.append("line")
-			.attr("class","stationLine")
+			.attr("class","baseGrid stationLine")
 			.style("stroke","#090")
 			.attr("x1",LEFTMARGIN)
 			.attr("x2",LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL)
@@ -214,7 +232,7 @@ function drawStationLine(){
 		var subline=SubLineStationData[i];
 		for(j=0;j<subline.stations.length;j++){
 			svg.append("line")
-				.attr("class","stationLine")
+				.attr("class","baseGrid stationLine")
 				.style("stroke","#090")
 				.attr("x1",LEFTMARGIN)
 				.attr("x2",LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL)
