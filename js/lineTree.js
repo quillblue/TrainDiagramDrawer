@@ -37,7 +37,7 @@ var treeSetting={
                     zTree.expandNode(treeNode, null, null, null, true);
                     lineTree.selectedNode = treeNode;
                 }else{
-                    alert('1')
+                    canvasInitialize(treeNode.dataFileName)
                 }
             }
         }

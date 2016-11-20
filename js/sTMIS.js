@@ -26,7 +26,17 @@ var StationDictionary=new Object();
 // 运行线宽度
 var TRAINLINE_WIDTH="1";
 
-var STATION_DATA, SUBLINE_CONNECTION_DATA, SUBLINE_STATION_DATA;
+/* Global Variables */
+var STARTHOUR=18;
+var ENDHOUR=18;
+
+//越行标注开关
+var MARK_STOPTIME=false;
+
+//上下行筛选开关 0:双向 1:下行 -1:上行
+var DIRECTION_FILTER=0;
+
+var STATION_DATA, SUBLINE_CONNECTION_DATA, SUBLINE_STATION, MAINTAINENCE_HOUR;
 
 var DOWN_TRAIN_DATA, UP_TRAIN_DATA;
 
@@ -48,16 +58,7 @@ $(document).ready(function(){
 		DIRECTION_FILTER= parseInt($('#direction').val());
 		canvasInitialize()
 	});
-	// if(DIRECTION_FILTER>=0){
-	// 	for(j=0;j<DownTrainData.length;j++){
-	// 		drawTrain(DownTrainData[j]);
-	// 	}
-	// }
-	// if(DIRECTION_FILTER<=0){
-	// 	for(j=0;j<UpTrainData.length;j++){
-	// 		drawTrain(UpTrainData[j]);
-	// 	}
-	// }
+	//drawTrain();
 })
 
 //更新整个运行图区域（切换线路.时间范围）
@@ -70,11 +71,13 @@ function canvasInitialize(lineName){
   			success: function(data){
   				STATION_DATA=data.StationData;
   				SUBLINE_STATION_DATA=data.SubLineStationData;
-  				SUBLINE_CONNECTION_DATA=data.SublineConnectionData;
+  				SUBLINE_CONNECTION=data.SubLineConnectionStation;
   				UP_TRAIN_DATA=data.UpTrainData;
-  				DOWN_TRAIN_DATA=data.DOWN_TRAIN_DATA;
+  				DOWN_TRAIN_DATA=data.DownTrainData;
+  				$('#mapTitle').html(data.MapTitle)
   				initStationDictionary();
 				initSpaceIndicator();
+				canvasInitialize();
   			},
   			dataType: 'json',
   			error:function(){
@@ -82,16 +85,20 @@ function canvasInitialize(lineName){
   			}
 		});
 	}
-	MAPHOURLENGTH=ENDHOUR==STARTHOUR?24:(ENDHOUR-STARTHOUR+24)%24;
-	$("#map").attr("width",MAPHOURLENGTH*60*TIMEINTERVAL+LEFTMARGIN+50+"px");
-	$("#map").css("height",MAPHEIGHT+150);
-	$("#stationCanvas").css("height",MAPHEIGHT+150);
-	drawTimeLine();
-	drawStationLine();
-	switch(direction){
-		case 1:$(".upTrain").hide();$(".downTrain").show();break;
-		case -1:$(".downTrain").hide();$(".upTrain").show();break;
-		case 0:$(".trainLine").show();
+	else{
+		MAPHOURLENGTH=ENDHOUR==STARTHOUR?24:(ENDHOUR-STARTHOUR+24)%24;
+		$("#map").attr("width",MAPHOURLENGTH*60*TIMEINTERVAL+LEFTMARGIN+50+"px");
+		$("#map").css("height",MAPHEIGHT+150);
+		$("#stationCanvas").css("height",MAPHEIGHT+150);
+		drawMaintainenceHour();
+		drawTimeLine();
+		drawStationLine();
+		switch(direction){
+			case 1:$(".upTrain").hide();$(".downTrain").show();break;
+			case -1:$(".downTrain").hide();$(".upTrain").show();break;
+			case 0:$(".trainLine").show();
+		}
+		drawTrain();
 	}
 }
 
@@ -105,18 +112,22 @@ function directionFilterChange(direction){
 	}
 }
 
+function drawMaintainenceHour(){
+
+
+}
 
 //初始化站名词典
 function initStationDictionary(){
-	var StationDictionary=new Object();
-	MINPOS=StationData[0].position;
-	MAXPOS=StationData[StationData.length-1].position;
-	for(i=0;i<StationData.length;i++){
-		StationDictionary[StationData[i].uniqueName]=StationData[i].position;
+	StationDictionary=new Object();
+	MINPOS=STATION_DATA[0].position;
+	MAXPOS=STATION_DATA[STATION_DATA.length-1].position;
+	for(i=0;i<STATION_DATA.length;i++){
+		StationDictionary[STATION_DATA[i].uniqueName]=STATION_DATA[i].position;
 	}
-	for(i=0;i<SubLineStationData.length;i++){
-		var subline=SubLineStationData[i];
-		if(SubLineStationData[i].direction==1){
+	for(i=0;i<SUBLINE_STATION_DATA.length;i++){
+		var subline=SUBLINE_STATION_DATA[i];
+		if(SUBLINE_STATION_DATA[i].direction==1){
 			MAXPOS+=30;
 			for(j=0;j<subline.stations.length;j++){
 				StationDictionary[subline.stations[j].uniqueName]=subline.stations[j].position+MAXPOS;
@@ -135,9 +146,9 @@ function initStationDictionary(){
 
 //初始化空间占用指示
 function initSpaceIndicator(){
-	var stationList=StationData;
-	for(i=0;i<SubLineStationData.length;i++){
-		stationList=stationList.concat(SubLineStationData[i].stations);
+	var stationList=STATION_DATA;
+	for(i=0;i<SUBLINE_STATION_DATA.length;i++){
+		stationList=stationList.concat(SUBLINE_STATION_DATA[i].stations);
 	}
 	SpaceIndicator.init(stationList);
 }
@@ -214,22 +225,22 @@ function timeLineColor(type){
 }
 
 function drawStationLine(){
-	for(i=0;i<StationData.length;i++){
+	for(i=0;i<STATION_DATA.length;i++){
 		svg.append("line")
 			.attr("class","baseGrid stationLine")
 			.style("stroke","#090")
 			.attr("x1",LEFTMARGIN)
 			.attr("x2",LEFTMARGIN+MAPHOURLENGTH*60*TIMEINTERVAL)
-			.attr("y1",convertStationToYCoordinate(StationData[i].uniqueName))
-			.attr("y2",convertStationToYCoordinate(StationData[i].uniqueName));
+			.attr("y1",convertStationToYCoordinate(STATION_DATA[i].uniqueName))
+			.attr("y2",convertStationToYCoordinate(STATION_DATA[i].uniqueName));
 		svgStation.append("text")
 			.attr("class","stationName")
-			.text(StationData[i].name)
-			.attr("x",50-StationData[i].name.length*6)
-			.attr("y",convertStationToYCoordinate(StationData[i].uniqueName)+4);
+			.text(STATION_DATA[i].name)
+			.attr("x",50-STATION_DATA[i].name.length*6)
+			.attr("y",convertStationToYCoordinate(STATION_DATA[i].uniqueName)+4);
 	}
-	for(i=0;i<SubLineStationData.length;i++){
-		var subline=SubLineStationData[i];
+	for(i=0;i<SUBLINE_STATION_DATA.length;i++){
+		var subline=SUBLINE_STATION_DATA[i];
 		for(j=0;j<subline.stations.length;j++){
 			svg.append("line")
 				.attr("class","baseGrid stationLine")
@@ -248,7 +259,20 @@ function drawStationLine(){
 }
 
 function drawTrain(){
+	if(DIRECTION_FILTER<1){
+		for(var i=0;i<DOWN_TRAIN_DATA.length;i++){
+			drawTrainLine(DOWN_TRAIN_DATA[i]);
+		}
+	}
+	if(DIRECTION_FILTER>-1){
+		for(var i=0;i<UP_TRAIN_DATA.length;i++){
+			drawTrainLine(UP_TRAIN_DATA[i]);
+		}
+	}
+}
 
+function drawTrainLine(trainData){
+	
 }
 
 /// Functions for draw Train line
@@ -302,9 +326,9 @@ function decidePointInMapByPointX(pointX){
 
 //是否为支线站
 function isStationOnSubline(stationName){
-	for(l=0;l<SubLineStationData.length;l++){
-		for(m=1;m<SubLineStationData[l].stations.length;m++){
-			if(SubLineStationData[l].stations[m].name==stationName){return true;}
+	for(l=0;l<SUBLINE_STATION_DATA.length;l++){
+		for(m=1;m<SUBLINE_STATION_DATA[l].stations.length;m++){
+			if(SUBLINE_STATION_DATA[l].stations[m].name==stationName){return true;}
 		}
 	}
 	return false;
