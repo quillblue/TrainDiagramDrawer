@@ -1,5 +1,6 @@
 /*
 * Created by Quillblue on 2015-7-6
+* Modified to test on 2018-06-05
 */
 /* Global Config*/
 // 第一条时间线距画布左侧的距离
